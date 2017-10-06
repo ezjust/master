@@ -1,0 +1,2 @@
+while true; do date; rm -f /test.file; sync; dd if=/dev/zero of=/test.file bs=1M count=400; sync; done
+while true; do date; xfs_freeze -f /; xfs_freeze -u /; done
