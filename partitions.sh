@@ -6,7 +6,7 @@ lsblk
 echo -e "!!!Please insert disks for partitions creation.\nSeparate them by coma, like /dev/sdb,/dev/sdc,/dev/sdd\nNOTE there should be three disks with minimum 2GB space on each!!!"
 read varname
 IFS=', ' read -r -a array <<< "$varname"
-echo "disk1=${array[0]}"\n"disk2=${array[1]}"\n"disk3=${array[2]}"\ndisks will be used for partitions creation
+echo -e "disk1=${array[0]}"\n"disk2=${array[1]}"\n"disk3=${array[2]}"
 
 disk1="${array[0]}"
 disk2="${array[1]}"
@@ -46,10 +46,8 @@ if [ $? -eq 0 ]; then
 find $pwd -name "figlet*.gz" -exec rm -rf {} \;
 find $pwd -name "index*.html*" -exec rm -rf {} \;
 figlet "figlet test"
-exit 0
 else
 echo "error occured on figlet compiling, check gcc compiler nad logs"
-exit 1
 fi
 
 
