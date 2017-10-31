@@ -6,7 +6,7 @@ lsblk
 echo -e "!!!Please insert disks for partitions creation.\nSeparate them by coma, like /dev/sdb,/dev/sdc,/dev/sdd\nNOTE there should be three disks with minimum 2GB space on each!!!"
 read varname
 IFS=', ' read -r -a array <<< "$varname"
-echo -e "disk1=${array[0]}"\n"disk2=${array[1]}"\n"disk3=${array[2]}"
+echo -e "disk1=${array[0]}\ndisk2=${array[1]}\ndisk3=${array[2]}"
 
 disk1="${array[0]}"
 disk2="${array[1]}"
