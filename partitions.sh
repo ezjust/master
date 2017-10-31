@@ -145,10 +145,10 @@ vgcreate lvm1 ${disk2}2 >> /dev/null 2>&1
 lvcreate -n lvm1_xfs -l 100%FREE lvm1 >> /dev/null 2>&1
 pvcreate ${disk2}3 >> /dev/null 2>&1
 vgcreate lvm2 ${disk2}3 >> /dev/null 2>&1
-lvcreate -n ${disk2}3 -l 100%FREE lvm2 >> /dev/null 2>&1
+lvcreate -n lvm2_ext3 -l 100%FREE lvm2 >> /dev/null 2>&1
 pvcreate ${disk2}4 >> /dev/null 2>&1
 vgcreate lvm3 ${disk2}4 >> /dev/null 2>&1
-lvcreate -n ${disk2}4 -l 100%FREE lvm3 >> /dev/null 2>&1
+lvcreate -n lvm3_ext4 -l 100%FREE lvm3 >> /dev/null 2>&1
 
 (echo yes;) | mdadm --create --verbose /dev/md0 --level=1 --raid-disks=2 /dev/lvm1/lvm1_xfs /dev/lvm2/lvm2_ext3 >> /dev/null 2>&1
  
