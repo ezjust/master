@@ -31,7 +31,8 @@ $build_num = (Select-String $log -pattern "Build number: " | Out-String )
 else { Write-Host -foregroundcolor yellow "Core is not installed, please enter branch version for installation. For example 7.0.0 or 7.1.0"
 $branch=Read-Host
 }
-$date=Get-Date
+$date=Get-Date -UFormat "%m/%d/%Y"
+$date_=Get-Date -UFormat "%Y-%m-%d"
 
 # Checking for branch and then download Core installation file if it is not exists in current folder
  
@@ -135,10 +136,9 @@ $emailSmtpServer = "smtp.gmail.com"
 $emailSmtpServerPort = "587"
 $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
 #$emailMessage.cc.add($emailcc)
-$emailMessage.Subject = "new Core build $installer is successfully installed" 
+$emailMessage.Subject = "CORE UPGRADED" 
 #$emailMessage.IsBodyHtml = $true #true or false depends
-$emailMessage.Body = "CORE UPGRADED"
-$emailMessage.Attachments = "$log"
+$emailMessage.Body = "new Core build $installer is successfully installed"
 $SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
 $SMTPClient.EnableSsl = $False
 $SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $Username , $Password );
@@ -148,6 +148,25 @@ $SMTPClient.Send( $emailMessage )
 Exit 0
 }
 else {Write-Output "$date : INSTALLATION FAILED check AppRecoveryInstallation.log for details" >> downloading.log
+
+#Message to mail if core was not upgraded
+$emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
+#$emailMessage.cc.add($emailcc)
+$emailMessage.Subject = "CORE FAILED TO UPGRADE" 
+#$emailMessage.IsBodyHtml = $true #true or false depends
+$emailMessage.Body = "look at attached log file, maybe it could help to investigate the issue"
+
+#Get log of installation
+
+$last_log_messages = Get-Content "$log" | Select-String -pattern "$date", "$date_" | Set-Content "$"
+
+$emailMessage.Attachments = "$log"
+$SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
+$SMTPClient.EnableSsl = $False
+$SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $Username , $Password );
+$SMTPClient.EnableSsl = $true;
+$SMTPClient.Send( $emailMessage )
+
 Exit 1
 }
 
