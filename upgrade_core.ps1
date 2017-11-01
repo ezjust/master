@@ -31,6 +31,7 @@ $build_num = (Select-String $log -pattern "Build number: " | Out-String )
 else { Write-Host -foregroundcolor yellow "Core is not installed, please enter branch version for installation. For example 7.0.0 or 7.1.0"
 $branch=Read-Host
 }
+$date_time=Get-Date
 $date=Get-Date -UFormat "%m/%d/%Y"
 $date_=Get-Date -UFormat "%Y-%m-%d"
 
@@ -51,7 +52,7 @@ if ($branch -eq "7.0.0") {
             $dlink = "https://tc.appassure.com" + $link
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
-                Write-Output "$date : $installer already exist in $downloadFolder. Skipping..." >> "$downloadFolder\downloading.log"
+                Write-Output "$date_time : $installer already exist in $downloadFolder. Skipping..." >> "$downloadFolder\downloading.log"
                 Write-Host -foregroundcolor cyan "Please check current directory downloading.log for details"
             }
             else {
