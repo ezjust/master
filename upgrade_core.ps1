@@ -2,7 +2,7 @@
 #
 #Preset of variables. Note: $password and QA.lic (Core license file) file should exists in current directory. Also if LOGS folder is not default please change $folder path
 $downloadFolder = split-path -parent $MyInvocation.MyCommand.Definition
-$username = "mbugaiov"
+$username = "dev-softheme"
 $password = Get-Content "$downloadFolder\mbugaiov_password_tc.txt"
 $release7 = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Release700_FullBuild/artifacts/children/installers"
 $develop = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers"
@@ -123,6 +123,28 @@ Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.Las
 #Write message to downloading.log
 if ( $LastExitCode -eq 0 ) {
 Write-Output "$date : new Core build $installer is successfully installed" >> downloading.log
+
+#Message to mail
+
+$Username = "ezjusy";
+$Password= "ezJUST3009";
+
+$From = "ezjusy@gmail.com"
+$To = "3spirit3@ukr.net"
+$emailSmtpServer = "smtp.gmail.com"
+$emailSmtpServerPort = "587"
+$emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
+#$emailMessage.cc.add($emailcc)
+$emailMessage.Subject = "new Core build $installer is successfully installed" 
+#$emailMessage.IsBodyHtml = $true #true or false depends
+$emailMessage.Body = "CORE UPGRADED"
+$emailMessage.Attachments = "$log"
+$SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
+$SMTPClient.EnableSsl = $False
+$SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $Username , $Password );
+$SMTPClient.EnableSsl = $true;
+$SMTPClient.Send( $emailMessage )
+
 Exit 0
 }
 else {Write-Output "$date : INSTALLATION FAILED check AppRecoveryInstallation.log for details" >> downloading.log
