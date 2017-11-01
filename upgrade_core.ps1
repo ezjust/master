@@ -51,7 +51,7 @@ if ($branch -eq "7.0.0") {
             $dlink = "https://tc.appassure.com" + $link
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
-                Write-Output "$date : $installer already exist in $downloadFolder. Skipping..." >> downloading.log
+                Write-Output "$date : $installer already exist in $downloadFolder. Skipping..." >> "$downloadFolder\downloading.log"
                 Write-Host -foregroundcolor cyan "Please check current directory downloading.log for details"
             }
             else {
@@ -86,7 +86,7 @@ elseif ($branch -eq "7.1.0") {
             $dlink = "https://tc.appassure.com" + $link
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
-                Write-Output "$date : $installer already exist in $downloadFolder. Skipping..." >> downloading.log
+                Write-Output "$date : $installer already exist in $downloadFolder. Skipping..." >> "$downloadFolder\downloading.log"
                 Write-Host -foregroundcolor Cyan "Please check current directory downloading.log for details"
             }
             else {
@@ -123,7 +123,7 @@ Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.Las
 
 #Write message to downloading.log
 if ( $LastExitCode -eq 0 ) {
-Write-Output "$date : new Core build $installer is successfully installed" >> downloading.log
+Write-Output "$date : new Core build $installer is successfully installed" >> "$downloadFolder\downloading.log"
 
 #Message to mail
 
@@ -147,7 +147,7 @@ $SMTPClient.Send( $emailMessage )
 
 Exit 0
 }
-else {Write-Output "$date : INSTALLATION FAILED check AppRecoveryInstallation.log for details" >> downloading.log
+else {Write-Output "$date : INSTALLATION FAILED check AppRecoveryInstallation.log for details" >> "$downloadFolder\downloading.log"
 
 #Message to mail if core was not upgraded
 $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
@@ -158,9 +158,11 @@ $emailMessage.Body = "look at attached log file, maybe it could help to investig
 
 #Get log of installation
 
-$last_log_messages = Get-Content "$log" | Select-String -pattern "$date", "$date_" | Set-Content "$"
+$last_log = "$downloadFolder\last_installation.log"
 
-$emailMessage.Attachments = "$log"
+Get-Content "$log" | Select-String -pattern "$date", "$date_" | Set-Content $last_log
+
+$emailMessage.Attachments = "$last_log"
 $SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
 $SMTPClient.EnableSsl = $False
 $SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $Username , $Password );
