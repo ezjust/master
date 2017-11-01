@@ -87,7 +87,7 @@ elseif ($branch -eq "7.1.0") {
             $dlink = "https://tc.appassure.com" + $link
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
-                Write-Output "$date : $installer already exist in $downloadFolder. Skipping..." >> "$downloadFolder\downloading.log"
+                Write-Output "$date_time : $installer already exist in $downloadFolder. Skipping..." >> "$downloadFolder\downloading.log"
                 Write-Host -foregroundcolor Cyan "Please check current directory downloading.log for details"
             }
             else {
@@ -114,7 +114,7 @@ $command = @'
 cmd.exe /C $last_build /silent licensekey=$downloadFolder\QA.lic $norebootx
 '@
 Invoke-Expression -Command:$command
-$date=Get-Date
+$date_time=Get-Date
 
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
@@ -124,7 +124,7 @@ Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.Las
 
 #Write message to downloading.log
 if ( $LastExitCode -eq 0 ) {
-Write-Output "$date : new Core build $installer is successfully installed" >> "$downloadFolder\downloading.log"
+Write-Output "$date_time : new Core build $installer is successfully installed" >> "$downloadFolder\downloading.log"
 
 #Message to mail
 
@@ -148,7 +148,7 @@ $SMTPClient.Send( $emailMessage )
 
 Exit 0
 }
-else {Write-Output "$date : INSTALLATION FAILED check AppRecoveryInstallation.log for details" >> "$downloadFolder\downloading.log"
+else {Write-Output "$date_time : INSTALLATION FAILED check AppRecoveryInstallation.log for details" >> "$downloadFolder\downloading.log"
 
 #Message to mail if core was not upgraded
 $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
