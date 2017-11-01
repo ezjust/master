@@ -191,8 +191,8 @@ mount ${disk3}1 /mnt/mp_unaligned_ext3 >> /dev/null 2>&1
 mount ${disk3}2 /mnt/mp_unaligned_ext4 >> /dev/null 2>&1
 mount ${disk3}3 /mnt/mp_unaligned_btrfs >> /dev/null 2>&1
 
-mdadm --detail --scan >> /etc/mdadm/mdadm.conf >> /dev/null 2>&1
-mdadm --detail --scan >> /etc/mdadm.conf >> /dev/null 2>&1
+mdadm --examine --scan >> /etc/mdadm/mdadm.conf 
+mdadm --examine --scan >> /etc/mdadm.conf
 
 #Edit fstab
 
