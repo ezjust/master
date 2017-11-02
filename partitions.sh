@@ -62,8 +62,9 @@ umount /mnt/mp_ext3 >> /dev/null 2>&1
 umount /mnt/mp_ext4 >> /dev/null 2>&1
 umount /mnt/mp_xfs >> /dev/null 2>&1
 umount /mnt/mp_btrfs >> /dev/null 2>&1
+umount /mnt/mp_lvm1_xfs >> /dev/null 2>&1
+umount /mnt/mp_lvm2_ext3 >> /dev/null 2>&1
 umount /mnt/mp_md0 >> /dev/null 2>&1
-umount /mnt/mp_lvm3 >> /dev/null 2>&1
 umount /mnt/mp_unaligned_ext3 >> /dev/null 2>&1
 umount /mnt/mp_unaligned_ext4 >> /dev/null 2>&1
 umount /mnt/mp_unaligned_btrfs >> /dev/null 2>&1
@@ -86,16 +87,12 @@ wipefs -a /dev/lvm1/lvm1_xfs >> /dev/null 2>&1
 lvremove -f /dev/lvm1/lvm1_xfs >> /dev/null 2>&1
 wipefs -a /dev/lvm2/lvm2_ext3 >> /dev/null 2>&1
 lvremove -f /dev/lvm2/lvm2_ext3 >> /dev/null 2>&1
-wipefs -a /dev/lvm3/lvm3_ext4 >> /dev/null 2>&1
-lvremove -f /dev/lvm3/lvm3_ext4 >> /dev/null 2>&1
 
 vgremove -f lvm1 >> /dev/null 2>&1
 vgremove -f lvm2 >> /dev/null 2>&1
-vgremove -f lvm3 >> /dev/null 2>&1
 
 pvremove -f ${disk2}2 >> /dev/null 2>&1
 pvremove -f ${disk2}3 >> /dev/null 2>&1
-pvremove -f ${disk2}4 >> /dev/null 2>&1
 
 
 for i in {1..4}
@@ -111,13 +108,13 @@ sleep 0.2
 
 done
 
-sed -i '/mp\|lvm3_ext/d' /etc/fstab; >> /dev/null 2>&1
-sed -i '/md0/d' /etc/mdadm/mdadm.conf >> /dev/null 2>&1
-sed -i '/md0/d' /etc/mdadm.conf >> /dev/null 2>&1
+sed -i '/mp\|lvm/d' /etc/fstab; >> /dev/null 2>&1
+sed -i '/md/d' /etc/mdadm/mdadm.conf >> /dev/null 2>&1
+sed -i '/md/d' /etc/mdadm.conf >> /dev/null 2>&1
 
 figlet "Disks were successfully wiped"
 partprobe >> /dev/null 2>&1
-sleep 0.5
+sleep 2.5
 lsblk 
 echo "-----------------------------"
 
@@ -146,11 +143,8 @@ lvcreate -n lvm1_xfs -l 100%FREE lvm1 >> /dev/null 2>&1
 pvcreate ${disk2}3 >> /dev/null 2>&1
 vgcreate lvm2 ${disk2}3 >> /dev/null 2>&1
 lvcreate -n lvm2_ext3 -l 100%FREE lvm2 >> /dev/null 2>&1
-pvcreate ${disk2}4 >> /dev/null 2>&1
-vgcreate lvm3 ${disk2}4 >> /dev/null 2>&1
-lvcreate -n lvm3_ext4 -l 100%FREE lvm3 >> /dev/null 2>&1
 
-(echo yes;) | mdadm --create --verbose /dev/md0 --level=1 --raid-disks=2 /dev/lvm1/lvm1_xfs /dev/lvm2/lvm2_ext3 >> /dev/null 2>&1
+(echo yes;) | mdadm --create --verbose /dev/md0 --level=1 --raid-disks=2 /dev/sdc4 /dev/sdd4 >> /dev/null 2>&1
  
 #Make fs on those partitions (ext2, ext3, ext4, xfs, btrfs)
 
@@ -159,8 +153,9 @@ mkfs.ext3 ${disk1}2
 mkfs.ext4 ${disk1}3
 mkfs.xfs ${disk1}4
 mkfs.btrfs ${disk2}1
-mkfs.xfs /dev/md0
-mkfs.ext4 /dev/lvm3/lvm3_ext4
+mkfs.xfs ${disk2}2
+mkfs.ext3 ${disk2}3
+mkfs.ext4 /dev/md0
 mkfs.ext3 ${disk3}1
 mkfs.ext4 ${disk3}2
 mkfs.btrfs ${disk3}3
@@ -174,8 +169,9 @@ mkdir /mnt/mp_ext3 >> /dev/null 2>&1
 mkdir /mnt/mp_ext4 >> /dev/null 2>&1
 mkdir /mnt/mp_xfs >> /dev/null 2>&1
 mkdir /mnt/mp_btrfs >> /dev/null 2>&1
-mkdir /mnt/mp_md0 >> /dev/null 2>&1
-mkdir /mnt/mp_lvm3 >> /dev/null 2>&1
+mkdir /mnt/mp_lvm1_xfs >> /dev/null 2>&1
+mkdir /mnt/mp_lvm2_ext3 >> /dev/null 2>&1
+mkdir /mnt/mp_md0_ext4 >> /dev/null 2>&1
 mkdir /mnt/mp_unaligned_ext3 >> /dev/null 2>&1
 mkdir /mnt/mp_unaligned_ext4 >> /dev/null 2>&1
 mkdir /mnt/mp_unaligned_btrfs >> /dev/null 2>&1
@@ -185,14 +181,15 @@ mount ${disk1}2 /mnt/mp_ext3 >> /dev/null 2>&1
 mount ${disk1}3 /mnt/mp_ext4 >> /dev/null 2>&1
 mount ${disk1}4 /mnt/mp_xfs >> /dev/null 2>&1
 mount ${disk2}1 /mnt/mp_btrfs >> /dev/null 2>&1
-mount /dev/md0 /mnt/mp_md0 >> /dev/null 2>&1
-mount /dev/lvm3/lvm3_ext4 /mnt/mp_lvm3 >> /dev/null 2>&1
+mount /dev/lvm1_xfs /mnt/mp_lvm1_xfs >> /dev/null 2>&1
+mount /dev/lvm2_ext3 /mnt/mp_lvm2_ext3 >> /dev/null 2>&1
+mount /dev/md0 /mnt/mp_md0_ext4 >> /dev/null 2>&1
 mount ${disk3}1 /mnt/mp_unaligned_ext3 >> /dev/null 2>&1
 mount ${disk3}2 /mnt/mp_unaligned_ext4 >> /dev/null 2>&1
 mount ${disk3}3 /mnt/mp_unaligned_btrfs >> /dev/null 2>&1
 
-mdadm --detail --scan >> /etc/mdadm/mdadm.conf >> /dev/null 2>&1
-mdadm --detail --scan >> /etc/mdadm.conf >> /dev/null 2>&1
+mdadm --detail --scan >> /etc/mdadm/mdadm.conf
+mdadm --detail --scan >> /etc/mdadm.conf 
 
 #Edit fstab
 
