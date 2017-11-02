@@ -144,7 +144,7 @@ pvcreate ${disk2}3 >> /dev/null 2>&1
 vgcreate lvm2 ${disk2}3 >> /dev/null 2>&1
 lvcreate -n lvm2_ext3 -l 100%FREE lvm2 >> /dev/null 2>&1
 
-(echo yes;) | mdadm --create --verbose /dev/md0 --level=1 --raid-disks=2 ${disk2}4 ${disk3}4 >> /dev/null 2>&1
+(echo yes;) | mdadm --create --verbose /dev/md0 --level=1 --raid-disks=2 ${disk2}4 ${disk3}4 
  
 #Make fs on those partitions (ext2, ext3, ext4, xfs, btrfs)
 
