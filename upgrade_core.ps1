@@ -31,7 +31,9 @@ $build_num = (Select-String $log -pattern "Build number: " | Out-String )
 else { Write-Host -foregroundcolor yellow "Core is not installed, please enter branch version for installation. For example 7.0.0 or 7.1.0"
 $branch=Read-Host
 }
-$date=Get-Date
+$date_time=Get-Date
+$date=Get-Date -UFormat "%m/%d/%Y"
+$date_=Get-Date -UFormat "%Y-%m-%d"
 
 # Checking for branch and then download Core installation file if it is not exists in current folder
  
@@ -50,7 +52,7 @@ if ($branch -eq "7.0.0") {
             $dlink = "https://tc.appassure.com" + $link
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
-                Write-Output "$date : $installer already exist in $downloadFolder. Skipping..." >> downloading.log
+                Write-Output "$date_time : $installer already exist in $downloadFolder. Skipping..." >> "$downloadFolder\downloading.log"
                 Write-Host -foregroundcolor cyan "Please check current directory downloading.log for details"
             }
             else {
@@ -85,7 +87,7 @@ elseif ($branch -eq "7.1.0") {
             $dlink = "https://tc.appassure.com" + $link
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
-                Write-Output "$date : $installer already exist in $downloadFolder. Skipping..." >> downloading.log
+                Write-Output "$date_time : $installer already exist in $downloadFolder. Skipping..." >> "$downloadFolder\downloading.log"
                 Write-Host -foregroundcolor Cyan "Please check current directory downloading.log for details"
             }
             else {
@@ -112,7 +114,7 @@ $command = @'
 cmd.exe /C $last_build /silent licensekey=$downloadFolder\QA.lic $norebootx
 '@
 Invoke-Expression -Command:$command
-$date=Get-Date
+$date_time=Get-Date
 
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
@@ -122,7 +124,7 @@ Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.Las
 
 #Write message to downloading.log
 if ( $LastExitCode -eq 0 ) {
-Write-Output "$date : new Core build $installer is successfully installed" >> downloading.log
+Write-Output "$date_time : new Core build $installer is successfully installed" >> "$downloadFolder\downloading.log"
 
 #Message to mail
 
@@ -135,10 +137,9 @@ $emailSmtpServer = "smtp.gmail.com"
 $emailSmtpServerPort = "587"
 $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
 #$emailMessage.cc.add($emailcc)
-$emailMessage.Subject = "new Core build $installer is successfully installed" 
+$emailMessage.Subject = "CORE UPGRADED" 
 #$emailMessage.IsBodyHtml = $true #true or false depends
-$emailMessage.Body = "CORE UPGRADED"
-$emailMessage.Attachments = "$log"
+$emailMessage.Body = "new Core build $installer is successfully installed"
 $SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
 $SMTPClient.EnableSsl = $False
 $SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $Username , $Password );
@@ -147,7 +148,28 @@ $SMTPClient.Send( $emailMessage )
 
 Exit 0
 }
-else {Write-Output "$date : INSTALLATION FAILED check AppRecoveryInstallation.log for details" >> downloading.log
+else {Write-Output "$date_time : INSTALLATION FAILED check AppRecoveryInstallation.log for details" >> "$downloadFolder\downloading.log"
+
+#Message to mail if core was not upgraded
+$emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
+#$emailMessage.cc.add($emailcc)
+$emailMessage.Subject = "CORE FAILED TO UPGRADE" 
+#$emailMessage.IsBodyHtml = $true #true or false depends
+$emailMessage.Body = "look at attached log file, maybe it could help to investigate the issue"
+
+#Get log of installation
+
+$last_log = "$downloadFolder\last_installation.log"
+
+Get-Content "$log" | Select-String -pattern "$date", "$date_" | Set-Content $last_log
+
+$emailMessage.Attachments = "$last_log"
+$SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
+$SMTPClient.EnableSsl = $False
+$SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $Username , $Password );
+$SMTPClient.EnableSsl = $true;
+$SMTPClient.Send( $emailMessage )
+
 Exit 1
 }
 
