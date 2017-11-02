@@ -153,8 +153,8 @@ mkfs.ext3 ${disk1}2
 mkfs.ext4 ${disk1}3
 mkfs.xfs ${disk1}4
 mkfs.btrfs ${disk2}1
-mkfs.xfs ${disk2}2
-mkfs.ext3 ${disk2}3
+mkfs.xfs /dev/lvm1/lvm1_xfs 
+mkfs.ext3 /dev/lvm2/lvm2_ext3
 mkfs.ext4 /dev/md0
 mkfs.ext3 ${disk3}1
 mkfs.ext4 ${disk3}2
@@ -181,8 +181,8 @@ mount ${disk1}2 /mnt/mp_ext3 >> /dev/null 2>&1
 mount ${disk1}3 /mnt/mp_ext4 >> /dev/null 2>&1
 mount ${disk1}4 /mnt/mp_xfs >> /dev/null 2>&1
 mount ${disk2}1 /mnt/mp_btrfs >> /dev/null 2>&1
-mount /dev/lvm1_xfs /mnt/mp_lvm1_xfs >> /dev/null 2>&1
-mount /dev/lvm2_ext3 /mnt/mp_lvm2_ext3 >> /dev/null 2>&1
+mount /dev/lvm1/lvm1_xfs /mnt/mp_lvm1_xfs >> /dev/null 2>&1
+mount /dev/lvm2/lvm2_ext3 /mnt/mp_lvm2_ext3 >> /dev/null 2>&1
 mount /dev/md0 /mnt/mp_md0_ext4 >> /dev/null 2>&1
 mount ${disk3}1 /mnt/mp_unaligned_ext3 >> /dev/null 2>&1
 mount ${disk3}2 /mnt/mp_unaligned_ext4 >> /dev/null 2>&1
