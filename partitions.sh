@@ -114,7 +114,7 @@ sed -i '/md/d' /etc/mdadm.conf >> /dev/null 2>&1
 
 figlet "Disks were successfully wiped"
 partprobe >> /dev/null 2>&1
-sleep 2.5
+sleep 5
 lsblk 
 echo "-----------------------------"
 
