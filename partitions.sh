@@ -188,7 +188,7 @@ mount ${disk3}1 /mnt/mp_unaligned_ext3 >> /dev/null 2>&1
 mount ${disk3}2 /mnt/mp_unaligned_ext4 >> /dev/null 2>&1
 mount ${disk3}3 /mnt/mp_unaligned_btrfs >> /dev/null 2>&1
 
-
+cp /etc/mdadm/mdadm.conf /etc/mdadm.conf
 mdadm --detail --scan >> /etc/mdadm/mdadm.conf
 mdadm --detail --scan >> /etc/mdadm.conf 
 
