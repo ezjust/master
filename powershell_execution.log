@@ -1,0 +1,21 @@
+Please check current directory downloading.log for details
+set-acl : The process does not possess the 'SeSecurityPrivilege' privilege 
+which is required for this operation.
+At C:\core_upgrade_files\upgrade_core.ps1:151 char:3
++   set-acl $File.Fullname $acl
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : PermissionDenied: (C:\core_upgrade...nstallation 
+   .log:String) [Set-Acl], PrivilegeNotHeldException
+    + FullyQualifiedErrorId : System.Security.AccessControl.PrivilegeNotHeldEx 
+   ception,Microsoft.PowerShell.Commands.SetAclCommand
+ 
+set-acl : The process does not possess the 'SeSecurityPrivilege' privilege 
+which is required for this operation.
+At C:\core_upgrade_files\upgrade_core.ps1:151 char:3
++   set-acl $File.Fullname $acl
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : PermissionDenied: (C:\core_upgrade_files\Process 
+   .log:String) [Set-Acl], PrivilegeNotHeldException
+    + FullyQualifiedErrorId : System.Security.AccessControl.PrivilegeNotHeldEx 
+   ception,Microsoft.PowerShell.Commands.SetAclCommand
+ 
