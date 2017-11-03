@@ -1,0 +1,80 @@
+-   find /home/ez/ -iname "EZjusy" - to find a file (not a case sensetive) in directory
+-   locate filename                - to find any files with "filename"
+-   updatedb                       - will update a base for search by locate
+-   apt-cache show ssh             - will show version of installed ssh package
+-   htop 			   - great task manager
+-   xming			   - great utility to use via ssh GUI utilities
+-   pvcreate /dev/sdc1		   - lvm format disk
+-   pvs				   - report information about physical volumes
+-   host			   - great utility for dns resolve of sites.
+-   dig 			   - more info about one of the records in dns zone (MX, A, AAAA record)
+-   netstat -tulpn | grep 80       -info about port usage
+-   cat nginx.conf | grep -v "#"   -data from file nginx.conf without comments and     
+                   | grep -v '^$'   empty lines
+-   a2enmod status 		   -module that help apache to see load of server
+-   apachectl graceful		   - restart of apache config but not of all processes
+-   # apt-get install libapache2-mod-ruby
+    # apt-get install libapache2-mod-perl2
+    # apt-get install libapache2-mod-python - installing of mods for apache
+    # apt-get install libapache2-mod-rpaf
+
+-   lsof -i :25 		   - get info about 25 port listenings.
+-   dmesg			   - (display message or driver message) is a command on most Unix-like operating systems that prints the message buffer of the kernel
+-   free -m			   - memory usage
+
+ctrl+P+Q 			   - exit from docker container but don't stop it
+
+docker ps 			   - shows us info about docker containers
+-   lsblk 			   - shows physical disks with there partitions
+-   lsmod | grep rapid 		   - shows rapid module
+-   bsctl -v			   - shows build version
+-   zypper refresh 		   - clean repo cache, refresh repos
+-   md5sum /home/ez/test.txt	   - check md5 hash sum of file
+-   dd bs=4M if=input.iso of=/dev/sdc      - make bootable usb (You must write to the entire device and not a partition on it (so, /dev/sdb not /dev/sdb1))
+-   iftop 			   -  watch network traffic on interface
+-   xfs_growfs 			   - after size changing of xfs filesystem partition
+-   fuser -u /mnt		   - provide info about who is using current folder
+-   rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n' - will show you pubkeys with options
+-   cmp file1 file2		   - compare files content
+-   diff paper.old paper.new	   - show difference between files
+-   patch program.c program.c.diff > program.c.new - write difference to new file
+-   cat input.txt | xclip -i       - copy file content to buffer
+-   rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n'  - shows gpg-keys
+-   sudo hdparm --fibmap /initrd.img - know what sectors of disk using file 
+-   ssh-keygen			   - generating ssh keys (public and rsa)
+-   ssh-copy-id -i root@10.10.10.10 - copy ssh-key via ssh
+-   vgchange -a y my_volume_group   - make lvm active after reboot
+-   mdadm --assemble /dev/md0       - make raid works after reboot
+-   mdadm --examine --scan          - show raids
+-   dd if=/dev/zero of=~/harddisk.img bs=1G count=0 seek=40
+-   dd if=/dev/zero of=bigfile bs=100M count=5 - create big file
+-   dd if=/path/to/ubuntu.iso of=/dev/sdb bs=1M - write iso to file
+-   mdadm --create --verbose /dev/md0 --level=0 --raid-devices=2 /dev/sda /dev/sdb - create raid 0
+-   ldd /opt/apprecovery/lib64/librofsDell.so - will show shared library if it's exist
+-   mount -o nodatasum,nodatacow,device=/dev/sdx /dev/sdx /mnt/sdx  - best practice to mount btrfs points
+-   tar -zxvf yourfile.tar.gz        - to extract the file to the current directory.
+-   tar -xjf /path/to/archive.tar.bz - bz untar
+- sudo rm /var/lib/apt/lists/lock, /var/cache/apt/archives/lock   - if dpkg is locked
+- du * -sh                           - show folders and subfolders size
+- $? 				     - get result of previous command 0 - success, 1- error
+- yum distribution-synchronization   - will update all packages to the latest available
+- systemctl stop NetworkManager
+- systemctl disable NetworkManager   - will disable NetworkManager
+- sudo rm -f /etc/udev/rules.d/70-persistent-net.rules - will delete rules of naming inet interfaces
+- rm -rf /var/lib/dpkg/updates       - will provide posibility to update via apt-get
+  sudo mkdir -p /var/lib/dpkg/{updates,alternatives,info,parts,triggers}
+- sudo tune2fs -m 0 /dev/sda1  - 0 percents reserved in /dev/sda1
+- w				     - information of current user session
+- kill %12			     - killing background jobs
+- rm -rf /home/*/sent*               - should resolve issue with sendind mails via mutt 
+- systemctl set-default multi-user.target - disable UI in debain9 and boot in console mode 
+- [root@localhost ~]# /opt/apprecovery/scripts/aafs_blist -i /dev/sdc1; echo - $? - check consistency of volume via our script
+- git config --global core.editor "nano"  - change text editor for git files
+- :%s/search/replace/gc  - vim replace "search" on "replace" with confirmation
+- :%s/search/replace/g  - vim replace "search" on "replace" witout confirmation
+- pvs, vgs, lvs - show info about LVM
+- for i in {1..360};do echo $i seconds spent && sleep 1;done - timer
+- ${x}card" - bash add "card" word to $x - for example $x="xyz" than echo ${x}card would be "xyzcard"
+- git add - add changed files for next commit
+- git commit -m "added my github name" - commit changes with comment
+- git push - add your files with commited changes to github
