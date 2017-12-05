@@ -28,7 +28,7 @@ done
 echo "Retrieving of the $branch.$build LIVEDVD iso has been completed. $branch.$build LiveDVD starts to be downloaded."
 dest_folder=/media/linux_share/LiveDVD_images/
 aria2c -d $dest_folder -x 16 --http-user=$username --http-passwd=123asdQ $build_link --out="rapidrecovery-livedvd-$branch.$build.iso"
-find $dest_folder -name 'rapidrecovery*' -mtime +2 | xargs rm -rf
+find $dest_folder -name 'rapidrecovery*' -mtime +0 | xargs rm -rf
 
 #Move LiveDVD to QAshare folder, if it is no need to make such operation, please comment all fields below with #
 
