@@ -1,11 +1,11 @@
 #!/bin/bash
 FILE="TC.log"
 username="dev-softheme"
-branch="7.0.0"
+branch="6.2.0"
 link="https://tc.appassure.com/viewType.html?buildTypeId=AppAssure_Linux_Release700_AgentBuilds_Debian8x64"
 wget -O "$FILE" --auth-no-challenge --no-check-certificate --http-user=$username --http-passwd=123asdQ $link > /dev/null 2>&1
 id=`cat TC.log | grep "build:" | grep -E -o "buildId=[[:digit:]]*" | sort -n -r | cut -d "=" -f2 | sed -n 2p`
-build=`cat $FILE | grep -E -o "#release-7.0.0.[[:digit:]]*" | cut -d "." -f4 | sed -n 1p`
+build=`cat $FILE | grep -E -o "#release-6.2.0.[[:digit:]]*" | cut -d "." -f4 | sed -n 1p`
 echo "Retrieving of the $branch.$build LiveDVD"
 #rm -r $FILE # cleanup html page, since it is not needed anymore
 function build {
