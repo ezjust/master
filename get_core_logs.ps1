@@ -28,7 +28,7 @@ if ($folder_check -eq $true) {
 operation
 }
 else {
-     Write-Host "Path to apprecovery logs doesn't exist at C:\ProgramData\AppRecovery\Logs write it mannually (For Example: E:\ProgramData\AppRecovery\Logs_Folder) or skip by pressing Enter: "
+     Write-Host "Path to apprecovery logs doesn't exist at C:\ProgramData\AppRecovery\Logs write it manually (For Example: E:\ProgramData\AppRecovery\Logs_Folder) or skip by pressing Enter: "
      $logs_folder=Read-Host
      $folder_check = Test-Path -IsValid $logs_folder
      if ($folder_check -eq $true) {
