@@ -1,4 +1,4 @@
-﻿$folder = "C:\ProgramData\AppRecovery\Logs1"
+﻿$folder = "C:\ProgramData\AppRecovery\Logs"
 $folder_check = Test-Path $folder
  
 
