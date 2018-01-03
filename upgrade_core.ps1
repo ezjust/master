@@ -38,7 +38,7 @@ $build_num = (Select-String $log -pattern "Build number: " | Out-String )
 
 #Branch version should be filled if Core is not installed
 
-else { Write-Host -foregroundcolor yellow "Core is not installed, please enter branch version for installation. For example 7.0.0 or 7.1.0"
+else { Write-Host -foregroundcolor yellow "Core is not installed, please enter branch version for installation. For example 6.2.0 or 7.1.0"
 $branch=Read-Host
 }
 #Dates in different formats
@@ -48,7 +48,7 @@ $date_=Get-Date -UFormat "%Y-%m-%d"
 
 # Checking for branch and then download Core installation file if it is not exists in current folder
  
-if ($branch -eq "7.0.0") {
+if ($branch -eq "6.2.0") {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
     $wc = New-Object system.net.webclient
     $wc.UseDefaultCredentials = $true
