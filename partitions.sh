@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#set -x
 #Search for disks those would be used in whole script
 
 lsblk
@@ -7,29 +7,49 @@ echo -e "!!!Please insert disks for partitions creation.\nSeparate them by coma,
 read varname
 IFS=', ' read -r -a array <<< "$varname"
 echo -e "disk1=${array[0]}\ndisk2=${array[1]}\ndisk3=${array[2]}"
-
 disk1="${array[0]}"
 disk2="${array[1]}"
 disk3="${array[2]}"
 
 #Investigate if mdadm and lvm2 utilities exist
 
+utils=(mdadm lvm parted gcc)
+
 if [ -n "`rpm -qa`" ]; then
-  install=`rpm -qa | grep 'mdadm\|lvm' >> /dev/null 2>&1`
+  utils+=(btrfs-progs)
+  	for i in "${utils[@]}"; do 
+		rpm -qa | grep $i >> /dev/null 2>&1; ccodes+=($?) ; 	
+	done
+
+	centos_release="cat /etc/centos-release"	
+	uniq_code=$(echo ${ccodes[@] } | sed 's/ /\n/g' | sort -ur | sed -n 1p)
+	
+	if [ "$uniq_code" -gt "0" -a -n "$centos_release" ]; then
+	yum update >> /dev/null 2>&1
+	yum -y install mdadm lvm btrfs-progs parted gcc >> /dev/null 2>&1
+	echo "Success! lvm2,mdadm,parted,btrfs-progs,gcc are installed"
+	elif [ "$uniq_code" -gt "0" ]; then
+	zypper update >> /dev/null 2>&1	
+	zypper -n -y install mdadm lvm btrfs-progs parted gcc >> /dev/null 2>&1
+	echo "Success! lvm2,mdadm,parted,btrfs-progs,gcc are installed"
+	else 
+	echo "lvm2,mdadm,parted,btrfs-progs,gcc utilities were installed EARLIER!!!"
+	fi
 else
-  install=`dpkg -l | grep 'mdadm\|lvm' >> /dev/null 2>&1`
+  utils+=(btrfs-tools)
+        for i in "${utils[@]}"; do
+                dpkg -l | grep $i >> /dev/null 2>&1; ccodes+=($?) ;
+        done
+	uniq_code=$(echo ${ccodes[@]} | grep -Eo 1 | cut -d " " -f1)
+ 	if [ "$uniq_code" -gt "0" ]; then
+        apt-get -y install mdadm lvm btrfs-progs parted gcc >> /dev/null 2>&1
+        echo "Success! lvm2,mdadm,parted,btrfs-tools,gcc are installed"
+	else
+        echo "lvm2,mdadm,parted,btrfs-tools,gcc utilities were installed EARLIER!!!"
+        fi
 fi
 
-if [ -n $install ]; then
-  echo "------------------------------------------------"
-  echo "lvm2 and mdadm utilities exist and ready to use!!!"
-  echo "------------------------------------------------"
-else 
-  echo "---------------------------------------------------------------------"
-  echo "Please install lvm and raid utilities to continue disks configuration"
-  echo "---------------------------------------------------------------------"
-  exit
-fi
+unset ccodes
 
 #Figlet utility installation
 
@@ -43,17 +63,20 @@ make >> /dev/null 2>&1
 make install >> /dev/null 2>&1
 
 if [ $? -eq 0 ]; then
-find $pwd -name "figlet*.gz" -exec rm -rf {} \;
-find $pwd -name "index*.html*" -exec rm -rf {} \;
-figlet "figlet test"
+find $pwd -name "figlet*.gz" -exec rm -rf {} \; >> /dev/null 2>&1
+find $pwd -name "index*.html*" -exec rm -rf {} \; >> /dev/null 2>&1
+
+figlet="/usr/local/bin/figlet -f slant"
+
+$figlet "test"
 else
-echo "error occured on figlet compiling, check gcc compiler nad logs"
+echo "error occured on figlet compiling, check gcc compiler and logs"
 fi
 
 
 #Umount partitions and remove all mount points folders, wipe fs
 
-figlet "OPERATIONS with old partitions";
+$figlet "OPERATIONS with old partitions";
 
 umount -a >> /dev/null 2>&1
 
@@ -112,7 +135,7 @@ sed -i '/mp\|lvm/d' /etc/fstab; >> /dev/null 2>&1
 sed -i '/md/d' /etc/mdadm/mdadm.conf >> /dev/null 2>&1
 sed -i '/md/d' /etc/mdadm.conf >> /dev/null 2>&1
 
-figlet "Disks were successfully wiped"
+$figlet "Disks were successfully wiped"
 partprobe >> /dev/null 2>&1
 sleep 5
 lsblk 
@@ -120,7 +143,7 @@ echo "-----------------------------"
 
 #Make new partitions on disks
 
-figlet "===Creation section==="
+$figlet "===Creation section==="
 
 (echo n; echo p; echo 1; echo 3000; echo 1000000; echo n; echo p; echo 2; echo 1000001; echo 2000000; echo n; echo p; echo 3; echo 2000001; echo 3000000; echo n; echo p; echo 4; echo 3000001; echo 4000000; echo w;)  | fdisk $disk1 >> /dev/null 2>&1
 
@@ -195,5 +218,5 @@ mdadm --detail --scan >> /etc/mdadm.conf
 #Edit fstab
 
 cat /proc/mounts | grep 'mp_\|md0' | awk '{print $1,$2,$3}' | awk '{print $0" defaults 0 0"}' >> /etc/fstab
-figlet "completed"
+$figlet "completed"
 exit 0
