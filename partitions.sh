@@ -14,36 +14,53 @@ disk3="${array[2]}"
 #Investigate if mdadm and lvm2 utilities exist
 
 utils=(mdadm lvm parted gcc)
+utils_yum=$(yum search btrfs | grep -F "x86_64" | cut -d "." -f1)
+utils_zyp=$(zypper search -s btrfs | grep -F "x86_64" | awk -F "|" '{print $2}' | tr -d '[:blank:]')
+utils_apt=$(apt-cache show btrfs* | grep "Source:" | awk -F ": " '{print $2}' | sort -n | sed -n 1p)
+
+# Function could be created with many arguments it is $1 and then it is uses below with check_codes "rpm -qa" (where check_codes - function name, "rpm -qa" $1 argument)
+
+function check_codes {
+        for i in "${utils[@]}"; do
+        	$1 | grep $i >> /dev/null 2>&1; ccodes+=($?) ;
+        done
+	uniq_code=$(echo ${ccodes[@]} | sed 's/ /\n/g' | sort -ur | sed -n 1p)
+        }
 
 if [ -n "`rpm -qa`" ]; then
-  utils+=(btrfs-progs)
-  	for i in "${utils[@]}"; do 
-		rpm -qa | grep $i >> /dev/null 2>&1; ccodes+=($?) ; 	
-	done
 
 	centos_release="cat /etc/centos-release"	
-	uniq_code=$(echo ${ccodes[@] } | sed 's/ /\n/g' | sort -ur | sed -n 1p)
-	
+	utils+=($utils_yum)
+
+	check_codes "rpm -qa"
+
 	if [ "$uniq_code" -gt "0" -a -n "$centos_release" ]; then
 	yum update >> /dev/null 2>&1
-	yum -y install mdadm lvm btrfs-progs parted gcc >> /dev/null 2>&1
-	echo "Success! lvm2,mdadm,parted,btrfs-progs,gcc are installed"
+	yum -y install ${utils[@]} >> /dev/null 2>&1
+	echo "Success! lvm2,mdadm,parted,btrfs-progs(tools),gcc are installed"
+
 	elif [ "$uniq_code" -gt "0" ]; then
-	zypper update >> /dev/null 2>&1	
-	zypper -n -y install mdadm lvm btrfs-progs parted gcc >> /dev/null 2>&1
-	echo "Success! lvm2,mdadm,parted,btrfs-progs,gcc are installed"
+	zypper update >> /dev/null 2>&1
+	unset utils=($utils_yum)
+	utils=(mdadm lvm parted gcc)
+	utils+=($utils_zyp)
+	
+	check_codes "rpm -qa"
+
+	zypper -n -y install ${utils[@]} >> /dev/null 2>&1
+	echo "Success! lvm2,mdadm,parted,btrfs-progs(tools),gcc are installed"
+	
 	else 
 	echo "lvm2,mdadm,parted,btrfs-progs,gcc utilities were installed EARLIER!!!"
 	fi
-else
-  utils+=(btrfs-tools)
-        for i in "${utils[@]}"; do
-                dpkg -l | grep $i >> /dev/null 2>&1; ccodes+=($?) ;
-        done
-	uniq_code=$(echo ${ccodes[@]} | grep -Eo 1 | cut -d " " -f1)
+else	
+	apt-get update >> /dev/null 2>&1
+	utils+=($utils_apt)
+	check_codes "dpkg -l"
+
  	if [ "$uniq_code" -gt "0" ]; then
-        apt-get -y install mdadm lvm btrfs-progs parted gcc >> /dev/null 2>&1
-        echo "Success! lvm2,mdadm,parted,btrfs-tools,gcc are installed"
+        apt-get -y ${utils[@]} >> /dev/null 2>&1
+        echo "Success! lvm2,mdadm,parted,btrfs-progs(tools),gcc are installed"
 	else
         echo "lvm2,mdadm,parted,btrfs-tools,gcc utilities were installed EARLIER!!!"
         fi
