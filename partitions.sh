@@ -14,9 +14,9 @@ disk3="${array[2]}"
 #Investigate if mdadm and lvm2 utilities exist
 
 utils=(mdadm lvm parted gcc)
-utils_yum=$(yum search btrfs | grep -F "x86_64" | cut -d "." -f1)
-utils_zyp=$(zypper search -s btrfs | grep -F "x86_64" | awk -F "|" '{print $2}' | tr -d '[:blank:]')
-utils_apt=$(apt-cache show btrfs* | grep "Source:" | awk -F ": " '{print $2}' | sort -n | sed -n 1p)
+utils_yum=$(yum search btrfs | grep -F "x86_64" | cut -d "." -f1 >> /dev/null 2>&1)
+utils_zyp=$(zypper search -s btrfs | grep -F "x86_64" | awk -F "|" '{print $2}' | tr -d '[:blank:]' >> /dev/null 2>&1)
+utils_apt=$(apt-cache show btrfs* | grep "Source:" | awk -F ": " '{print $2}' | sort -n | sed -n 1p >> /dev/null 2>&1) 
 
 # Function could be created with many arguments it is $1 and then it is uses below with check_codes "rpm -qa" (where check_codes - function name, "rpm -qa" $1 argument)
 
@@ -41,7 +41,7 @@ if [ -n "`rpm -qa`" ]; then
 
 	elif [ "$uniq_code" -gt "0" ]; then
 	zypper update >> /dev/null 2>&1
-	unset utils=($utils_yum)
+	unset utils
 	utils=(mdadm lvm parted gcc)
 	utils+=($utils_zyp)
 	
