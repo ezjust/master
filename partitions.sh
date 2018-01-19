@@ -19,7 +19,6 @@ fi
 
 #Investigate if mdadm and lvm2 utilities exist
 
-utils=(mdadm lvm parted gcc)
 utils_yum=$(yum search btrfs | grep -F "x86_64" | cut -d "." -f1 >> /dev/null 2>&1)
 utils_zyp=$(zypper search -s btrfs | grep -F "x86_64" | awk -F "|" '{print $2}' | tr -d '[:blank:]' >> /dev/null 2>&1)
 utils_apt=$(apt-cache show btrfs* | grep "Source:" | awk -F ": " '{print $2}' | sort -n | sed -n 1p >> /dev/null 2>&1) 
@@ -27,11 +26,12 @@ utils_apt=$(apt-cache show btrfs* | grep "Source:" | awk -F ": " '{print $2}' | 
 # Function could be created with many arguments it is $1 and then it is uses below with check_codes "rpm -qa" (where check_codes - function name, "rpm -qa" $1 argument)
 
 function check_codes {
-        for i in "${utils[@]}"; do
-        	$1 | grep $i >> /dev/null 2>&1; ccodes+=($?) ;
+        utils=(mdadm lvm2 parted gcc)
+	for i in "${utils[@]}"; do
+        	$1 | grep $i; ccodes+=($?) ;
         done
 	uniq_code=$(echo ${ccodes[@]} | sed 's/ /\n/g' | sort -ur | sed -n 1p)
-        }
+        }i
 
 if [ -n "`rpm -qa`" ]; then
 
@@ -48,7 +48,7 @@ if [ -n "`rpm -qa`" ]; then
 	elif [ "$uniq_code" -gt "0" ]; then
 	zypper update >> /dev/null 2>&1
 	unset utils
-	utils=(mdadm lvm parted gcc)
+	utils=(mdadm lvm2 parted gcc)
 	utils+=($utils_zyp)
 	
 	check_codes "rpm -qa"
