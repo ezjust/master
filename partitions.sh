@@ -3,13 +3,19 @@
 #Search for disks those would be used in whole script
 
 lsblk
-echo -e "!!!Please insert disks for partitions creation.\nSeparate them by coma, like /dev/sdb,/dev/sdc,/dev/sdd\nNOTE there should be three disks with minimum 2GB space on each!!!"
+echo -e "!!!Please insert disks for partitions creation.\nSeparate them by coma, like /dev/sdb,/dev/sdc,/dev/sdd\nNOTE there should be three disks with minimum 2GB space on each!!!\nOR press "ENTER" to use default array of disks"
 read varname
+
+if [[ -z $varname ]]; then
+array=(/dev/sdb /dev/sdc /dev/sdd)
+echo -e "Disks would be set by default\ndisk1=${array[0]}\ndisk2=${array[1]}\ndisk3=${array[2]}"
+else
 IFS=', ' read -r -a array <<< "$varname"
 echo -e "disk1=${array[0]}\ndisk2=${array[1]}\ndisk3=${array[2]}"
 disk1="${array[0]}"
 disk2="${array[1]}"
 disk3="${array[2]}"
+fi
 
 #Investigate if mdadm and lvm2 utilities exist
 
