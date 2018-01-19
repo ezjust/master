@@ -26,7 +26,7 @@ utils_apt=$(apt-cache show btrfs* | grep "Source:" | awk -F ": " '{print $2}' | 
 # Function could be created with many arguments it is $1 and then it is uses below with check_codes "rpm -qa" (where check_codes - function name, "rpm -qa" $1 argument)
 
 function check_codes {
-        utils=(mdadm lvm2 parted gcc)
+        utils=(mdadm "lvm2" parted gcc)
 	for i in "${utils[@]}"; do
         	$1 | grep $i; ccodes+=($?) ;
         done
@@ -48,7 +48,7 @@ if [ -n "`rpm -qa`" ]; then
 	elif [ "$uniq_code" -gt "0" ]; then
 	zypper update >> /dev/null 2>&1
 	unset utils
-	utils=(mdadm lvm2 parted gcc)
+	utils=(mdadm "lvm2" parted gcc)
 	utils+=($utils_zyp)
 	
 	check_codes "rpm -qa"
@@ -62,6 +62,7 @@ if [ -n "`rpm -qa`" ]; then
 else	
 	apt-get update >> /dev/null 2>&1
 	utils+=($utils_apt)
+
 	check_codes "dpkg -l"
 
  	if [ "$uniq_code" -gt "0" ]; then
