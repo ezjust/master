@@ -31,7 +31,7 @@ function check_codes {
         	$1 | grep $i ; ccodes+=($?) ;
         done
 	uniq_code=$(echo ${ccodes[@]} | sed 's/ /\n/g' | sort -ur | sed -n 1p)
-        }i
+        }
 
 if [ -n "`rpm -qa`" ]; then
 
