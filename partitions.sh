@@ -349,7 +349,7 @@ mdadm --detail --scan >> /etc/mdadm.conf
 cat /proc/mounts | grep 'mp_\|md0' | awk '{print $1,$2,$3}' | awk '{print $0" defaults 0 0"}' >> /etc/fstab
 
 echo -e "\e[1mSTEP3 Disks have been partitioned, \e[30;48;5;82mcompleted\e[0m"
-echo 1 > \tmp\finecho
+echo 1 > /tmp/finecho
 sleep 1 
 echo -e "\e[30;48;5;82mFinished!\e[0m"
 exit 0
