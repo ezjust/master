@@ -43,7 +43,7 @@ do
     	echo -ne "$1\r"
     	sleep 0.5
     fi
-done
+done &
 #}
 
 #loading "Wait for a while, script is in progress" &
