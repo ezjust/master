@@ -175,7 +175,7 @@ function umount_parts {
 	wipefs -a /dev/lvm2_stripped/lvm4_xfs
 	lvremove -f /dev/lvm2_stripped/lvm4_xfs
 	wipefs -a /dev/lvm3/lvm5_ext4_mirrored
-	lvremove -f /dev/lvm3/lvm5_ext4_mirrored
+	lvremove -f /dev/lvm3_mirrored/lvm5_ext4_mirrored
 
 	vgremove -f lvm1
 	vgremove -f lvm2_stripped
@@ -282,7 +282,7 @@ function parts_creation {
 	mkfs.$3 ${disk2}1
 	mkfs.ext3 /dev/lvm1/lvm1_ext3
 	mkfs.xfs /dev/lvm1/lvm2_xfs
-	mkfs.ext4 /dev/lvm3/lvm5_ext4_mirrored
+	mkfs.ext4 /dev/lvm3_mirrored/lvm5_ext4_mirrored
 	mkfs.ext4 /dev/md0
 	mkfs.xfs /dev/md1
 	mkfs.ext3 /dev/md2
@@ -316,7 +316,7 @@ function parts_creation {
 	mount ${disk2}1 /mnt/mp_unaligned_$3
 	mount /dev/lvm1/lvm1_ext3 /mnt/mp_lvm1_ext3
 	mount /dev/lvm1/lvm2_xfs /mnt/mp_lvm2_xfs
-	mount /dev/lvm3/lvm5_ext4_mirrored /mnt/mp_lvm5_ext4_mirrored
+	mount /dev/lvm3_mirrored/lvm5_ext4_mirrored /mnt/mp_lvm5_ext4_mirrored
 	mount /dev/md0 /mnt/mp_md0_ext4
 	mount /dev/md1 /mnt/mp_md1_xfs
 	mount /dev/md2 /mnt/mp_md2_ext3
