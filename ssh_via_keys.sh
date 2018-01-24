@@ -22,13 +22,14 @@ fi
 #copy id_rsa to remote server and check it works
 sshpass -p $pass ssh-copy-id -i $fullpath $user@$dest_server
 check1="echo $?"
+
 if [ -n "$check1" ]; then
-ssh $user@$dest_server date
-echo "!!!SSH successfully configured via rsa keys!!!"
-sed -i "/dest_server=/c\dest_server=\"$dest_server\"" rsync_mail.sh >> /dev/null 2>&1
-sed -i "/rsync_user=/c\rsync_user=\"$user\"" rsync_mail.sh >> /dev/null 2>&1
+	ssh $user@$dest_server date
+	echo "!!!SSH successfully configured via rsa keys!!!"
+	sed -i "/dest_server=/c\dest_server=\"$dest_server\"" rsync_mail.sh >> /dev/null 2>&1
+	sed -i "/rsync_user=/c\rsync_user=\"$user\"" rsync_mail.sh >> /dev/null 2>&1
 else
-echo "something went wrong, check sshpass is installed id_rsa is available into $dir directory"
+	echo "something went wrong, check sshpass is installed id_rsa is available into $dir directory"
 fi
 exit 0
 
