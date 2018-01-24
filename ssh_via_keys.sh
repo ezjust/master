@@ -9,7 +9,7 @@ echo -e "Specify ssh password to the remote host:"
 read -s pass
 
 #Create id_rsa key
-cur_user="whoami"
+cur_user=`whoami`
 dir="/home/$cur_user/.ssh"
 if [ -d "$dir" ]; then
 ssh-keygen -t rsa -N "" -f $dir/id_rsa
