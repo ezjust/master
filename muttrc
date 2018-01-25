@@ -1,0 +1,21 @@
+set ssl_starttls=yes
+set ssl_force_tls=yes
+
+set imap_user = 'graintrackinfo@gmail.com'
+set imap_pass = 'DEVOPS_2018'
+
+set from='graintrackinfo'
+set realname='graintrackinfo'
+
+set folder = imaps://imap.gmail.com/
+set spoolfile = imaps://imap.gmail.com/INBOX
+set postponed="imaps://imap.gmail.com/[Gmail]/Drafts"
+
+set header_cache = "~/.mutt/cache/headers"
+set message_cachedir = "~/.mutt/cache/bodies"
+set certificate_file = "~/.mutt/certificates"
+
+set smtp_url = 'smtps://graintrackinfo@gmail.com:DEVOPS_2018@smtp.gmail.com:465/'
+
+set move = no
+set imap_keepalive = 900
