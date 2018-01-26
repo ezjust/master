@@ -7,7 +7,7 @@ version=$(cat /etc/os-release | grep VERSION_ID | awk -F "=" '{print $2}' | tr -
 #Search for disks those would be used in whole script
 
 lsblk
-echo -e "Please insert disks for partitions creation.\nSeparate them by coma, like \e[1m/dev/sdb,/dev/sdc,/dev/sdd\nNOTE \e[0mthere should be three disks with minimum 2GB space on each\nOR \e[1mpress "ENTER" to use default array of disks"
+echo -e "Please insert disks for partitions creation.\nSeparate them by coma, like \e[1m/dev/sdb,/dev/sdc,/dev/sdd\nNOTE \e[0mthere should be three disks with minimum 2GB space on each\nOR \e[1mpress "ENTER" to use default array of disks\e[0m"
 read varname
 
 if [[ -z $varname ]]; then
@@ -64,7 +64,7 @@ function check_codes {
 	uniq_code=$(echo ${ccodes[@]} | sed 's/ /\n/g' | sort -ur | sed -n 1p)
         }
 
-if [ -n "`rpm -qa`" ]; then
+if [ -n "`rpm -qa 2> /dev/null`" ]; then
 
 	utils+=($utils_yum)
 
@@ -93,7 +93,7 @@ else
 	apt-get update >> /dev/null 2>&1
 	utils+=($utils_apt)
 
-	check_codes "dpkg -l"
+	check_codes "dpkg -l >> /dev/null 2>&1"
 
  	if [ "$uniq_code" -gt "0" ]; then
         apt-get -y ${utils[@]} >> /dev/null 2>&1
@@ -206,6 +206,11 @@ else
 umount_parts "ext2" "btrfs" "xfs"
 
 fi
+
+sync; echo 1 > /proc/sys/vm/drop_caches
+
+partprobe
+
 
 for i in {1..8}
 do
@@ -341,12 +346,19 @@ parts_creation "ext2" "btrfs" "xfs"
 fi
 
 {
-(cp /etc/mdadm/mdadm.conf /etc/mdadm.conf)
+cp /etc/mdadm/mdadm.conf /etc/mdadm.conf
 mdadm --detail --scan >> /etc/mdadm/mdadm.conf
 mdadm --detail --scan >> /etc/mdadm.conf 
 } 2> /dev/null
 
-cat /proc/mounts | grep 'mp_\|md0' | awk '{print $1,$2,$3}' | awk '{print $0" defaults 0 0"}' >> /etc/fstab
+mounts=(`cat /proc/mounts | grep 'mp_' | awk '{print $1}' | tr '\n' ' '`)
+
+for i in "${mounts[@]}"; do
+        uuid=$(blkid -o export $i | grep "^UUID=")
+        mpoint=$(cat /proc/mounts | grep $i | awk '{print $2,$3}' | awk '{ print $0" defaults 0 0"}')
+        echo -e "$uuid $mpoint\n" >> /etc/fstab
+done
+
 
 echo -e "\e[1mSTEP3 Disks have been partitioned, \e[30;48;5;82mcompleted\e[0m"
 echo 1 > /tmp/finecho
