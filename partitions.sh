@@ -71,7 +71,7 @@ if [ -n "`rpm -qa 2> /dev/null`" ]; then
 	check_codes "rpm -qa >> /dev/null 2>&1"
 
 	if [ "$uniq_code" -gt "0" -a -n "$utils_yum" ]; then
-	yum update >> /dev/null 2>&1
+	yum -y update >> /dev/null 2>&1
 	yum -y install ${utils[@]} >> /dev/null 2>&1
 	echo -e "\e[1mSTEP1 lvm2,mdadm,parted,btrfs-progs(tools),gcc are installed, \e[30;48;5;82mcompleted\e[0m"
 
