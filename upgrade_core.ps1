@@ -130,7 +130,7 @@ $date_time=Get-Date
 
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
-$days="3"
+$days="2"
 $lastwrite = (get-date).AddDays(-$days)
 Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
 
