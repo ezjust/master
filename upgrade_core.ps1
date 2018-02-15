@@ -158,7 +158,7 @@ Write-Output "$date_time : new Core build $installer is successfully installed" 
 
 $cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
 $mongos_ser = Get-Service -Name "*Mongo*" | %{$_.Status}
-$statuses = Write-Host "Mongo service status = $mongos_ser `r`nCore service status = $cores_ser"
+$statuses = "Mongo service status = $mongos_ser `r`nCore service status = $cores_ser"
 
 #Message to mail
 
