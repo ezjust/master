@@ -51,7 +51,8 @@ $com = "$downloadFolder\$last_build"
 $com_args = @(
 "/silent",
 "licensekey=$downloadFolder\QA.lic",
-"reboot=asneeded"
+"reboot=asneeded",
+"privacypolicy=accept"
 )
 $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
 }
