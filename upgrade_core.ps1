@@ -55,6 +55,7 @@ $com_args = @(
 )
 $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
 }
+return $install.ExistCode
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
 $days="2"
