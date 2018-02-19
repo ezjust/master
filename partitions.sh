@@ -235,15 +235,15 @@ partprobe >> /dev/null 2>&1
 
 #Make new partitions on disks
 
-(echo n; echo p; echo 1; echo ; echo 1000000; echo n; echo p; echo 2; echo 1000001; echo 2000000; echo n; echo p; echo 3; echo 2000001; echo 3000000; echo n; echo p; echo 4; echo 3000011; echo 4000000; echo w;)  | fdisk $disk1 >> /dev/null 2>&1
+(echo n; echo p; echo 1; echo ; echo 1000000; echo n; echo p; echo 2; echo 1000001; echo 2000000; echo n; echo p; echo 3; echo 2000001; echo 3000000; echo n; echo p; echo 4; echo 3000011; echo 4000000; echo w;)  | fdisk -u $disk1 >> /dev/null 2>&1
 
 sleep 0.2
 
-(echo n; echo p; echo 1; echo 2500; echo 1000000; echo n; echo p; echo 2; echo 1000001; echo 2000000; echo n; echo p; echo 3; echo 2000001; echo 2999999; echo n; echo e; echo 3002048; echo 4000000; echo n; echo ; echo 3290000; echo n; echo ; echo 3490000; echo n; echo ; echo 3790000; echo n; echo ; echo 4000000; echo w;) | fdisk $disk2 >> /dev/null 2>&1
+(echo n; echo p; echo 1; echo 2500; echo 1000000; echo n; echo p; echo 2; echo 1000001; echo 2000000; echo n; echo p; echo 3; echo 2000001; echo 2999999; echo n; echo e; echo 3002048; echo 4000000; echo n; echo ; echo 3290000; echo n; echo ; echo 3490000; echo n; echo ; echo 3790000; echo n; echo ; echo 4000000; echo w;) | fdisk -u $disk2 >> /dev/null 2>&1
 
 sleep 0.2
 
-(echo n; echo p; echo 1; echo 3000; echo 999999; echo n; echo p; echo 2; echo 1000000; echo 1999999; echo n; echo p; echo 3; echo 2000000; echo 2999999; echo n; echo e; echo 4; echo 3002048; echo 4000000; echo n; echo ; echo 3290000; echo n; echo ; echo 3490000; echo n; echo ; echo 3790000; echo n; echo ; echo 4000000; echo w;)  | fdisk $disk3 >> /dev/null 2>&1
+(echo n; echo p; echo 1; echo 3000; echo 999999; echo n; echo p; echo 2; echo 1000000; echo 1999999; echo n; echo p; echo 3; echo 2000000; echo 2999999; echo n; echo e; echo 4; echo 3002048; echo 4000000; echo n; echo ; echo 3290000; echo n; echo ; echo 3490000; echo n; echo ; echo 3790000; echo n; echo ; echo 4000000; echo w;)  | fdisk -u $disk3 >> /dev/null 2>&1
 
 sleep 0.2
 
