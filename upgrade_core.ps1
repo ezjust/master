@@ -44,40 +44,13 @@ $date_time=Get-Date
 $date=Get-Date -UFormat "%m/%d/%Y"
 $date_=Get-Date -UFormat "%Y-%m-%d"
 
-#Installation of latest downloaded build for last 105 minutes
-function install_core {
-$last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-105)} | Select-Object -first 1 | Select -exp Name
-$com = "$downloadFolder\$last_build"
-$com_args = @(
-"/silent",
-"licensekey=$downloadFolder\QA.lic",
-"reboot=asneeded"
-)
-$install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
-}
+
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
 $days="2"
 $lastwrite = (get-date).AddDays(-$days)
 Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
 
-
-#Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such are Process.log and last_installation.log and other "new added" files EXIST in the installation folder
-
-function change_perm {
-$Ar = New-Object System.Security.AccessControl.FileSystemAccessRule ("Users","FullControl","Allow")
-
-foreach ($file in $(Get-ChildItem $downloadFolder -Exclude *devuser_tc.txt -Recurse )) {
-  
-  $acl=get-acl $file.FullName
- 
-  #Add this access rule to the ACL
-  $acl.SetAccessRule($Ar)
-  
-  #Write the changes to the object
-  set-acl $File.Fullname $acl
-  }
-}
 
 # Set $artlink depends on $branch
 
@@ -115,14 +88,15 @@ if ($HTTP_Status -eq "200") {
         if ($link -like '*Core-X*') {
             $myMatch = ".*installers\/(.*-([\d.]+).exe)"
             $link -match $myMatch | out-null
-            $installer = $($Matches[1])
+            $installer = $($myMatch[1])
             $dlink = "https://tc.appassure.com" + $link
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
                 Write-Output "$date_time : $installer already exist in $downloadFolder. Skipping..." >> $down_log
                 Write-Host -foregroundcolor cyan "Please check current directory downloading.log for details"
             }
-            else {
+        }
+        else {
                 Write-host "Downloading $installer to $downloadFolder..."
                 aria2c -x 16 -d $downloadFolder --http-user=$username --http-passwd=$password $dlink
                 #very slow downloading
@@ -133,16 +107,40 @@ if ($HTTP_Status -eq "200") {
                 #$wc.DownloadFile($dlink, $output)
                
                 Write-Host -foregroundcolor Green "Download of $installer completed"
-            }
+        }
        
         }
+
     }
 
-# Call previously set functions 
-install_core
-change_perm
+#Installation of latest downloaded build for last 1000 minutes
 
-}
+    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-1000)} | Select-Object -first 1 | Select -exp Name
+    $com = "$downloadFolder\$last_build"
+    $com_args = @(
+    "/silent",
+    "licensekey=$downloadFolder\QA.lic",
+    "reboot=asneeded"
+    )
+    $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
+    return $install.ExitCode
+
+#Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such are Process.log and last_installation.log and other "new added" files EXIST in the installation folder
+
+
+    $Ar = New-Object System.Security.AccessControl.FileSystemAccessRule ("Users","FullControl","Allow")
+
+    foreach ($file in $(Get-ChildItem $downloadFolder -Exclude *devuser_tc.txt -Recurse )) {
+  
+    $acl=get-acl $file.FullName
+ 
+    #Add this access rule to the ACL
+    $acl.SetAccessRule($Ar)
+  
+    #Write the changes to the object
+    set-acl $file.Fullname $acl
+    }
+
 
 else {Write-Error "$date : There are no artifacts in the last build, wait for new one or install manually" >> $down_log;}
 
@@ -152,6 +150,8 @@ Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
 
 
 #Sending e-mails and save logs of installation proccess
+
+Write-Host $install.ExitCode
 
 if ( $install.ExitCode -eq 0 ) {
 Write-Output "$date_time : new Core build $installer is successfully installed" >> $down_log
