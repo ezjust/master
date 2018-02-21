@@ -88,7 +88,7 @@ if ($HTTP_Status -eq "200") {
         if ($link -like '*Core-X*') {
             $myMatch = ".*installers\/(.*-([\d.]+).exe)"
             $link -match $myMatch | out-null
-            $installer = $($myMatch[1])
+            $installer = $($Matches[1])
             $dlink = "https://tc.appassure.com" + $link
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
