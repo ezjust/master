@@ -95,8 +95,8 @@ if ($HTTP_Status -eq "200") {
                 Write-Output "$date_time : $installer already exist in $downloadFolder. Skipping..." >> $down_log
                 Write-Host -foregroundcolor cyan "Please check current directory downloading.log for details"
             }
-        }
-        else {
+        
+            else {
                 Write-host "Downloading $installer to $downloadFolder..."
                 aria2c -x 16 -d $downloadFolder --http-user=$username --http-passwd=$password $dlink
                 #very slow downloading
@@ -107,12 +107,12 @@ if ($HTTP_Status -eq "200") {
                 #$wc.DownloadFile($dlink, $output)
                
                 Write-Host -foregroundcolor Green "Download of $installer completed"
-        }
+            }
        
         }
 
     }
-
+}
 #Installation of latest downloaded build for last 1000 minutes
 
     $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-1000)} | Select-Object -first 1 | Select -exp Name
@@ -151,9 +151,7 @@ Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
 
 #Sending e-mails and save logs of installation proccess
 
-Write-Host $install.ExitCode
-
-if ( $install.ExitCode -eq 0 ) {
+if ( $install.ExitCode -eq "0" ) {
 Write-Output "$date_time : new Core build $installer is successfully installed" >> $down_log
 
 $cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
