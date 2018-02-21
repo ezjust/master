@@ -44,7 +44,23 @@ $date_time=Get-Date
 $date=Get-Date -UFormat "%m/%d/%Y"
 $date_=Get-Date -UFormat "%Y-%m-%d"
 
+<<<<<<< HEAD
 
+=======
+#Installation of latest downloaded build for last 105 minutes
+function install_core {
+$last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-105)} | Select-Object -first 1 | Select -exp Name
+$com = "$downloadFolder\$last_build"
+$com_args = @(
+"/silent",
+"licensekey=$downloadFolder\QA.lic",
+"reboot=asneeded",
+"privacypolicy=accept"
+)
+$install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
+}
+return $install.ExistCode
+>>>>>>> c4afb82f95336e95ec041be2a769785c3476dd8a
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
 $days="2"
