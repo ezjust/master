@@ -115,7 +115,7 @@ if ($HTTP_Status -eq "200") {
 }
 #Installation of latest downloaded build for last 1000 minutes
 
-    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-1000)} | Select-Object -first 1 | Select -exp Name
+    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-100)} | Select-Object -first 1 | Select -exp Name
     $com = "$downloadFolder\$last_build"
     $com_args = @(
     "/silent",
@@ -123,7 +123,7 @@ if ($HTTP_Status -eq "200") {
     "reboot=asneeded"
     )
     $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
-    return $install.ExitCode
+    $lastcom = $?
 
 #Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such are Process.log and last_installation.log and other "new added" files EXIST in the installation folder
 
@@ -151,12 +151,12 @@ Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
 
 #Sending e-mails and save logs of installation proccess
 
-if ( $install.ExitCode -eq "0" ) {
+if ( $lastcom -eq "True" ) {
 Write-Output "$date_time : new Core build $installer is successfully installed" >> $down_log
 
 $cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
 $mongos_ser = Get-Service -Name "*Mongo*" | %{$_.Status}
-$statuses = "Mongo service status = $mongos_ser `r`nCore service status = $cores_ser"
+$statuses = "Mongo service status = <<$mongos_ser>> `r`nCore service status = <<$cores_ser>>"
 
 #Message to mail
 
@@ -175,6 +175,7 @@ $SMTPClient.Send( $emailMessage )
 
 Exit 0
 }
+
 else { Write-Output "$date_time : INSTALLATION FAILED check AppRecoveryInstallation.log and Process.log for details" >> $down_log
 
 #Collecting powershell output installation log
