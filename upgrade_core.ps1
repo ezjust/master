@@ -4,8 +4,6 @@
 $downloadFolder = split-path -parent $MyInvocation.MyCommand.Definition
 $username = "dev-softheme"
 $password = Get-Content "$downloadFolder\devuser_tc.txt"
-$release7 = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Release700_FullBuild/artifacts/children/installers"
-$develop = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers"
 $folder = "C:\ProgramData\AppRecovery\Logs"
 $down_log = "$downloadFolder\downloading.log"
 
@@ -46,14 +44,45 @@ $date_time=Get-Date
 $date=Get-Date -UFormat "%m/%d/%Y"
 $date_=Get-Date -UFormat "%Y-%m-%d"
 
+
+#Delete builds those are older than 3 days in folder
+$extension="*.exe"
+$days="2"
+$lastwrite = (get-date).AddDays(-$days)
+Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
+
+
+# Set $artlink depends on $branch
+
+if ($branch -eq "6.2.0") {
+$artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Release700_FullBuild/artifacts/children/installers"
+}
+elseif ($branch -eq "7.1.0") {
+$artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers"
+}
+else {
+Write-Error "$date : branch has been set in wrong way, there is no such $branch available on the teamcity" >> $down_log
+}
+
+
+# Validating artifacts link on the team city
+
+$HTTP_Request = [System.Net.WebRequest]::Create($artilink)
+$HTTP_Request.Credentials = new-object System.Net.NetworkCredential($username, $password)
+
+# We then get a response from the site.
+$HTTP_Response = $HTTP_Request.GetResponse()
+$HTTP_Status = [int]$HTTP_Response.StatusCode
+$HTTP_Request.ServicePoint.CloseConnectionGroup("")
+
 # Checking for branch and then download Core installation file if it is not exists in current folder
  
-if ($branch -eq "6.2.0") {
+if ($HTTP_Status -eq "200") {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
     $wc = New-Object system.net.webclient
     $wc.UseDefaultCredentials = $true
     $wc.Credentials = New-Object System.Net.NetworkCredential($username, $password)
-    [xml]$xml = $wc.DownloadString($release7)
+    [xml]$xml = $wc.DownloadString($artilink)
    
     foreach ($link in $xml.files.file.content.href) {
         if ($link -like '*Core-X*') {
@@ -66,6 +95,7 @@ if ($branch -eq "6.2.0") {
                 Write-Output "$date_time : $installer already exist in $downloadFolder. Skipping..." >> $down_log
                 Write-Host -foregroundcolor cyan "Please check current directory downloading.log for details"
             }
+        
             else {
                 Write-host "Downloading $installer to $downloadFolder..."
                 aria2c -x 16 -d $downloadFolder --http-user=$username --http-passwd=$password $dlink
@@ -80,76 +110,39 @@ if ($branch -eq "6.2.0") {
             }
        
         }
+
     }
 }
+#Installation of latest downloaded build for last 1000 minutes
 
-elseif ($branch -eq "7.1.0") {
-    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
-    $wc = New-Object system.net.webclient
-    $wc.UseDefaultCredentials = $true
-    $wc.Credentials = New-Object System.Net.NetworkCredential($username, $password)
-    [xml]$xml = $wc.DownloadString($develop)
-   
-    foreach ($link in $xml.files.file.content.href) {
-        if ($link -like '*Core-X*') {
-            $myMatch = ".*installers\/(.*-([\d.]+).exe)"
-            $link -match $myMatch | out-null
-            $installer = $($Matches[1])
-            $dlink = "https://tc.appassure.com" + $link
-            $output = Join-Path $downloadfolder -ChildPath $installer
-            if ((Test-Path $output -PathType Leaf)) {
-                Write-Output "$date_time : $installer already exist in $downloadFolder. Skipping..." >> $down_log
-                Write-Host -foregroundcolor Cyan "Please check current directory downloading.log for details"
-            }
-            else {
-                Write-host "Downloading $installer to $downloadFolder..."        
-                aria2c -x 16 -d $downloadFolder --http-user=$username --http-passwd=$password $dlink
-                #very slow downloading
-                #$credCache = new-object System.Net.CredentialCache
-                #$creds = new-object System.Net.NetworkCredential($username, $password)
-                #$credCache.Add($dlink, "Basic", $creds)
-                #$wc.Credentials = $credCache
-                #$wc.DownloadFile($dlink, $output)   
-                Write-Host -foregroundcolor Green "Download of $installer completed"
-            }
-       
-        }
-    }
-}
-else {Write-Error "version of product doesn't match script standards please change version into the script to newer and try again"; Exit 2}
-
-#Installation of latest downloaded build for last 5 minutes
-
-$last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-165)}
-$norebootx="reboot=asneeded"
-$command = @'
-cmd.exe /C $last_build /silent licensekey=$downloadFolder\QA.lic $norebootx
-'@
-Invoke-Expression -Command:$command
-$date_time=Get-Date
-
-#Delete builds those are older than 3 days in folder
-$extension="*.exe"
-$days="3"
-$lastwrite = (get-date).AddDays(-$days)
-Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
-
+    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-100)} | Select-Object -first 1 | Select -exp Name
+    $com = "$downloadFolder\$last_build"
+    $com_args = @(
+    "/silent",
+    "licensekey=$downloadFolder\QA.lic",
+    "reboot=asneeded"
+    )
+    $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
+    $lastcom = $?
 
 #Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such are Process.log and last_installation.log and other "new added" files EXIST in the installation folder
 
 
-$Ar = New-Object System.Security.AccessControl.FileSystemAccessRule ("Users","FullControl","Allow")
+    $Ar = New-Object System.Security.AccessControl.FileSystemAccessRule ("Users","FullControl","Allow")
 
-foreach ($file in $(Get-ChildItem $downloadFolder -Exclude *devuser_tc.txt -Recurse )) {
+    foreach ($file in $(Get-ChildItem $downloadFolder -Exclude *devuser_tc.txt -Recurse )) {
   
-  $acl=get-acl $file.FullName
+    $acl=get-acl $file.FullName
  
-  #Add this access rule to the ACL
-  $acl.SetAccessRule($Ar)
+    #Add this access rule to the ACL
+    $acl.SetAccessRule($Ar)
   
-  #Write the changes to the object
-  set-acl $File.Fullname $acl
-  }
+    #Write the changes to the object
+    set-acl $file.Fullname $acl
+    }
+
+
+else {Write-Error "$date : There are no artifacts in the last build, wait for new one or install manually" >> $down_log;}
 
 #Collecting powershell output installation log from bat file execution
 $power_logs = "$downloadFolder\Process.log"
@@ -158,9 +151,12 @@ Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
 
 #Sending e-mails and save logs of installation proccess
 
-if ( $LastExitCode -eq 0 ) {
+if ( $lastcom -eq "True" ) {
 Write-Output "$date_time : new Core build $installer is successfully installed" >> $down_log
 
+$cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
+$mongos_ser = Get-Service -Name "*Mongo*" | %{$_.Status}
+$statuses = "Mongo service status = <<$mongos_ser>> `r`nCore service status = <<$cores_ser>>"
 
 #Message to mail
 
@@ -168,7 +164,7 @@ $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
 #$emailMessage.cc.add($emailcc)
 $emailMessage.Subject = "CORE UPGRADED" 
 #$emailMessage.IsBodyHtml = $true #true or false depends
-$emailMessage.Body = "new Core build $installer is successfully installed"
+$emailMessage.Body = "new Core build $installer is successfully installed `r`n$statuses"
 $att1 = new-object Net.Mail.Attachment($power_logs)
 $emailMessage.Attachments.add($att1)
 $SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
@@ -179,7 +175,8 @@ $SMTPClient.Send( $emailMessage )
 
 Exit 0
 }
-else {Write-Output "$date_time : INSTALLATION FAILED check AppRecoveryInstallation.log and Process.log for details" >> $down_log
+
+else { Write-Output "$date_time : INSTALLATION FAILED check AppRecoveryInstallation.log and Process.log for details" >> $down_log
 
 #Collecting powershell output installation log
 $last_log = "$downloadFolder\last_installation.log"
