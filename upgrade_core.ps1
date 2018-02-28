@@ -6,6 +6,7 @@ $username = "dev-softheme"
 $password = Get-Content "$downloadFolder\devuser_tc.txt"
 $folder = "C:\ProgramData\AppRecovery\Logs"
 $down_log = "$downloadFolder\downloading.log"
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 # Set Security protocol
 
 #SMTP settings
 $User = "ezjusy"
@@ -63,7 +64,7 @@ $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault
 else {
 Write-Error "$date : branch has been set in wrong way, there is no such $branch available on the teamcity" >> $down_log
 }
-
+Write-Host $artilink
 
 # Validating artifacts link on the team city
 
@@ -76,13 +77,13 @@ $HTTP_Status = [int]$HTTP_Response.StatusCode
 $HTTP_Request.ServicePoint.CloseConnectionGroup("")
 
 # Checking for branch and then download Core installation file if it is not exists in current folder
- 
+
 if ($HTTP_Status -eq "200") {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
     $wc = New-Object system.net.webclient
     $wc.UseDefaultCredentials = $true
     $wc.Credentials = New-Object System.Net.NetworkCredential($username, $password)
-    [xml]$xml = $wc.DownloadString($artilink)
+    [xml]$xml = $wc.DownloadString("https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers")
    
     foreach ($link in $xml.files.file.content.href) {
         if ($link -like '*Core-X*') {
