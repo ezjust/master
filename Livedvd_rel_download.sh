@@ -9,7 +9,7 @@ build=`cat $FILE | grep -E -o "#release-6.2.0.[[:digit:]]*" | cut -d "." -f4 | s
 echo "Retrieving of the $branch.$build LiveDVD"
 #rm -r $FILE # cleanup html page, since it is not needed anymore
 function build {
-	build_link="https://tc.appassure.com/repository/download/AppAssure_Linux_Release700_AgentBuilds_Debian8x64/$id:id/rapidrecovery-livedvd-$branch.$build.iso"
+	build_link="$link/$id:id/rapidrecovery-livedvd-$branch.$build.iso"
 }
 build
 error_code=`wget --auth-no-challenge --no-check-certificate --http-user=$username --http-passwd=123asdQ -q --spider $build_link; echo $?`
