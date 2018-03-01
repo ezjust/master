@@ -55,10 +55,10 @@ Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.Las
 
 # Set $artlink depends on $branch
 
-if ($branch -eq "6.2.0") {
+if ($branch = "6.2.0") {
 $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Release700_FullBuild/artifacts/children/installers"
 }
-elseif ($branch -eq "7.1.0") {
+elseif ($branch = "7.1.0") {
 $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers"
 }
 else {
@@ -78,12 +78,12 @@ $HTTP_Request.ServicePoint.CloseConnectionGroup("")
 
 # Checking for branch and then download Core installation file if it is not exists in current folder
 
-if ($HTTP_Status -eq "200") {
+if ($HTTP_Status = "200") {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
     $wc = New-Object system.net.webclient
     $wc.UseDefaultCredentials = $true
     $wc.Credentials = New-Object System.Net.NetworkCredential($username, $password)
-    [xml]$xml = $wc.DownloadString("https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers")
+    [xml]$xml = $wc.DownloadString("$artilink")
    
     foreach ($link in $xml.files.file.content.href) {
         if ($link -like '*Core-X*') {
