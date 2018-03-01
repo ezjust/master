@@ -114,6 +114,14 @@ if ($HTTP_Status = "200") {
 
     }
 }
+
+
+else {Write-Error "$date : There are no artifacts in the last build, wait for new one or install manually" >> $down_log;}
+
+#Collecting powershell output installation log from bat file execution
+$power_logs = "$downloadFolder\Process.log"
+Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
+
 #Installation of latest downloaded build for last 1000 minutes
 
     $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-100)} | Select-Object -first 1 | Select -exp Name
@@ -122,9 +130,11 @@ if ($HTTP_Status = "200") {
     "/silent",
     "licensekey=$downloadFolder\QA.lic",
     "reboot=asneeded"
+    "privacypolicy=accept"
     )
     $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
     $lastcom = $?
+    Write-Host $lastcom
 
 #Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such are Process.log and last_installation.log and other "new added" files EXIST in the installation folder
 
@@ -141,14 +151,6 @@ if ($HTTP_Status = "200") {
     #Write the changes to the object
     set-acl $file.Fullname $acl
     }
-
-
-else {Write-Error "$date : There are no artifacts in the last build, wait for new one or install manually" >> $down_log;}
-
-#Collecting powershell output installation log from bat file execution
-$power_logs = "$downloadFolder\Process.log"
-Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
-
 
 #Sending e-mails and save logs of installation proccess
 
