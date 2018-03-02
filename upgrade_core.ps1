@@ -6,6 +6,7 @@ $username = "dev-softheme"
 $password = Get-Content "$downloadFolder\devuser_tc.txt"
 $folder = "C:\ProgramData\AppRecovery\Logs"
 $down_log = "$downloadFolder\downloading.log"
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 # Set Security protocol
 
 #SMTP settings
 $User = "ezjusy"
@@ -39,18 +40,6 @@ $build_num = (Select-String $log -pattern "Build number: " | Out-String )
 else { Write-Host -foregroundcolor yellow "Core is not installed, please enter branch version for installation. For example 6.2.0 or 7.1.0"
 $branch=Read-Host
 }
-#Dates in different formats
-$date_time=Get-Date
-$date=Get-Date -UFormat "%m/%d/%Y"
-$date_=Get-Date -UFormat "%Y-%m-%d"
-
-
-#Delete builds those are older than 3 days in folder
-$extension="*.exe"
-$days="2"
-$lastwrite = (get-date).AddDays(-$days)
-Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
-
 
 # Set $artlink depends on $branch
 
@@ -64,6 +53,10 @@ else {
 Write-Error "$date : branch has been set in wrong way, there is no such $branch available on the teamcity" >> $down_log
 }
 
+#Dates in different formats
+$date_time=Get-Date
+$date=Get-Date -UFormat "%m/%d/%Y"
+$date_=Get-Date -UFormat "%Y-%m-%d"
 
 # Validating artifacts link on the team city
 
@@ -76,13 +69,13 @@ $HTTP_Status = [int]$HTTP_Response.StatusCode
 $HTTP_Request.ServicePoint.CloseConnectionGroup("")
 
 # Checking for branch and then download Core installation file if it is not exists in current folder
- 
-if ($HTTP_Status -eq "200") {
+
+if ($HTTP_Status = "200") {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
     $wc = New-Object system.net.webclient
     $wc.UseDefaultCredentials = $true
     $wc.Credentials = New-Object System.Net.NetworkCredential($username, $password)
-    [xml]$xml = $wc.DownloadString($artilink)
+    [xml]$xml = $wc.DownloadString("$artilink")
    
     foreach ($link in $xml.files.file.content.href) {
         if ($link -like '*Core-X*') {
@@ -113,6 +106,14 @@ if ($HTTP_Status -eq "200") {
 
     }
 }
+
+
+else {Write-Error "$date : There are no artifacts in the last build, wait for new one or install manually" >> $down_log;}
+
+#Collecting powershell output installation log from bat file execution
+$power_logs = "$downloadFolder\Process.log"
+Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
+
 #Installation of latest downloaded build for last 1000 minutes
 
     $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-100)} | Select-Object -first 1 | Select -exp Name
@@ -121,9 +122,17 @@ if ($HTTP_Status -eq "200") {
     "/silent",
     "licensekey=$downloadFolder\QA.lic",
     "reboot=asneeded"
+    "privacypolicy=accept"
     )
     $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
     $lastcom = $?
+    Write-Host $lastcom
+
+#Delete builds those are older than 3 days in folder
+$extension="*.exe"
+$days="2"
+$lastwrite = (get-date).AddDays(-$days)
+Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
 
 #Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such are Process.log and last_installation.log and other "new added" files EXIST in the installation folder
 
@@ -140,14 +149,6 @@ if ($HTTP_Status -eq "200") {
     #Write the changes to the object
     set-acl $file.Fullname $acl
     }
-
-
-else {Write-Error "$date : There are no artifacts in the last build, wait for new one or install manually" >> $down_log;}
-
-#Collecting powershell output installation log from bat file execution
-$power_logs = "$downloadFolder\Process.log"
-Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
-
 
 #Sending e-mails and save logs of installation proccess
 
