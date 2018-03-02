@@ -1,0 +1,53 @@
+#!/bin/bash
+function get_branch_a_build {
+FILE="TC.log"
+username="dev-softheme"
+branch="$1"
+link="https://tc.appassure.com/viewType.html?buildTypeId=AppAssure_Linux_$2"
+wget -O "$FILE" --auth-no-challenge --no-check-certificate --http-user=$username --http-passwd=123asdQ $link > /dev/null 2>&1
+id=`cat TC.log | grep "build:" | grep -E -o "buildId=[[:digit:]]*" | sort -n -r | cut -d "=" -f2 | sed -n 1p`
+build=`cat $FILE | grep -E -o "#$3-$1.[[:digit:]]*" | cut -d "." -f4 | sed -n 1p`
+echo "Retrieving of the $branch.$build LiveDVD"
+#rm -r $FILE # cleanup html page, since it is not needed anymore
+
+build_link="https://tc.appassure.com/repository/download/AppAssure_Linux_$2/$id:id/rapidrecovery-livedvd-$branch.$build.iso"
+error_code=`wget --auth-no-challenge --no-check-certificate --http-user=$username --http-passwd=123asdQ -q --spider $build_link; echo $?`
+
+echo $build_link
+
+    while [ $error_code != 0 ]
+    do
+	build=$(($build -1))
+	build
+	error_code=`wget --auth-no-challenge --no-check-certificate --http-user=$username --http-passwd=123asdQ -q --spider $build_link; echo $?`
+	echo $build_link
+	echo "Retrieving of the $branch.$build LiveDVD"
+    done
+
+echo "Retrieving of the $branch.$build LIVEDVD iso has been completed. $branch.$build LiveDVD starts to be downloaded."
+
+dest_folder="/media/linux_share/LiveDVD_images"
+chk_file_ex="$dest_folder/rapidrecovery-livedvd-$branch.$build.iso"
+echo $chk_file_ex
+   if [ -f $chk_file_ex ]; then
+      echo "File $branch.$build.iso exists"
+      return 0
+   else
+      aria2c -d $dest_folder -x 16 --http-user=$username --http-passwd=123asdQ $build_link --allow-overwrite=true --out="rapidrecovery-livedvd-$branch.$build.iso"
+      find $dest_folder -name 'rapidrecovery*' -mtime +0 | xargs rm -rf
+      return 0
+   fi
+}
+
+get_branch_a_build "6.2.0" "Release700_AgentBuilds_Debian8x64" "release" 
+
+get_branch_a_build "7.1.0" "RebrandedDevelop_AgentBuilds_Debian8x64" "develop"
+
+exit
+
+#Move LiveDVD to QAshare folder, if it is no need to make such operation, please comment all fields below with #
+
+#dest_folder=/media/linux_share/LiveDVD_images/
+#mv rapidrecovery-livedvd-$branch.$build.iso $dest_folder
+
+
