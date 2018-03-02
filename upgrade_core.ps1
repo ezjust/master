@@ -40,31 +40,23 @@ $build_num = (Select-String $log -pattern "Build number: " | Out-String )
 else { Write-Host -foregroundcolor yellow "Core is not installed, please enter branch version for installation. For example 6.2.0 or 7.1.0"
 $branch=Read-Host
 }
-#Dates in different formats
-$date_time=Get-Date
-$date=Get-Date -UFormat "%m/%d/%Y"
-$date_=Get-Date -UFormat "%Y-%m-%d"
-
-
-#Delete builds those are older than 3 days in folder
-$extension="*.exe"
-$days="2"
-$lastwrite = (get-date).AddDays(-$days)
-Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
-
 
 # Set $artlink depends on $branch
 
-if ($branch = "6.2.0") {
+if ($branch -eq "6.2.0") {
 $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Release700_FullBuild/artifacts/children/installers"
 }
-elseif ($branch = "7.1.0") {
+elseif ($branch -eq "7.1.0") {
 $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers"
 }
 else {
 Write-Error "$date : branch has been set in wrong way, there is no such $branch available on the teamcity" >> $down_log
 }
-Write-Host $artilink
+
+#Dates in different formats
+$date_time=Get-Date
+$date=Get-Date -UFormat "%m/%d/%Y"
+$date_=Get-Date -UFormat "%Y-%m-%d"
 
 # Validating artifacts link on the team city
 
@@ -135,6 +127,12 @@ Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
     $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
     $lastcom = $?
     Write-Host $lastcom
+
+#Delete builds those are older than 3 days in folder
+$extension="*.exe"
+$days="2"
+$lastwrite = (get-date).AddDays(-$days)
+Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
 
 #Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such are Process.log and last_installation.log and other "new added" files EXIST in the installation folder
 
