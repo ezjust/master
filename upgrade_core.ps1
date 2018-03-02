@@ -45,9 +45,11 @@ $branch=Read-Host
 
 if ($branch -eq "6.2.0") {
 $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Release700_FullBuild/artifacts/children/installers"
+$core_ver = "release 10.10.61.20"
 }
 elseif ($branch -eq "7.1.0") {
 $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers"
+$core_ver = "develop 10.10.61.30"
 }
 else {
 Write-Error "$date : branch has been set in wrong way, there is no such $branch available on the teamcity" >> $down_log
@@ -110,6 +112,7 @@ if ($HTTP_Status = "200") {
 
 else {Write-Error "$date : There are no artifacts in the last build, wait for new one or install manually" >> $down_log;}
 
+
 #Collecting powershell output installation log from bat file execution
 $power_logs = "$downloadFolder\Process.log"
 Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
@@ -165,7 +168,7 @@ $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
 #$emailMessage.cc.add($emailcc)
 $emailMessage.Subject = "CORE UPGRADED" 
 #$emailMessage.IsBodyHtml = $true #true or false depends
-$emailMessage.Body = "new Core build $installer is successfully installed `r`n$statuses"
+$emailMessage.Body = "Server info = $core_ver`r`nnew Core build $installer is successfully installed`r`n$statuses"
 $att1 = new-object Net.Mail.Attachment($power_logs)
 $emailMessage.Attachments.add($att1)
 $SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
@@ -188,7 +191,7 @@ Get-Content $log | Select-String -pattern "$date", "$date_" | Set-Content $last_
 $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
 #$emailMessage.cc.add($emailcc)
 $emailMessage.Subject = "CORE FAILED TO UPGRADE" 
-$emailMessage.Body = "OOps...Something went wrong.Look at attached log file, maybe it could help to investigate the issue"
+$emailMessage.Body = "Server info = $core_ver`r`nOOps...Something went wrong.Look at attached log file, maybe it could help to investigate the issue"
 $emailMessage.Attachments.add($power_logs)
 $emailMessage.Attachments.add($last_log)
 $emailMessage.Attachments.add($down_log)
