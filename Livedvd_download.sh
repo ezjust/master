@@ -5,7 +5,7 @@ username="dev-softheme"
 branch="$1"
 link="https://tc.appassure.com/viewType.html?buildTypeId=AppAssure_Linux_$2"
 wget -O "$FILE" --auth-no-challenge --no-check-certificate --http-user=$username --http-passwd=123asdQ $link > /dev/null 2>&1
-id=`cat TC.log | grep "build:" | grep -E -o "buildId=[[:digit:]]*" | sort -n -r | cut -d "=" -f2 | sed -n 1p`
+id=`cat TC.log | grep "build:" | grep -E -o "buildId=[[:digit:]]*" | sort -n -r | cut -d "=" -f2 | sed -n $4p`
 build=`cat $FILE | grep -E -o "#$3-$1.[[:digit:]]*" | cut -d "." -f4 | sed -n 1p`
 echo "Retrieving of the $branch.$build LiveDVD"
 #rm -r $FILE # cleanup html page, since it is not needed anymore
@@ -18,7 +18,7 @@ echo $build_link
     while [ $error_code != 0 ]
     do
 	build=$(($build -1))
-	build
+	build_link="https://tc.appassure.com/repository/download/AppAssure_Linux_$2/$id:id/rapidrecovery-livedvd-$branch.$build.iso"	
 	error_code=`wget --auth-no-challenge --no-check-certificate --http-user=$username --http-passwd=123asdQ -q --spider $build_link; echo $?`
 	echo $build_link
 	echo "Retrieving of the $branch.$build LiveDVD"
@@ -39,9 +39,9 @@ echo $chk_file_ex
    fi
 }
 
-get_branch_a_build "6.2.0" "Release700_AgentBuilds_Debian8x64" "release" 
+get_branch_a_build "6.2.0" "Release700_AgentBuilds_Debian8x64" "release" "1"
 
-get_branch_a_build "7.1.0" "RebrandedDevelop_AgentBuilds_Debian8x64" "develop"
+get_branch_a_build "7.1.0" "RebrandedDevelop_AgentBuilds_Debian8x64" "develop" "2"
 
 exit
 
