@@ -14,9 +14,11 @@ build_link="https://tc.appassure.com/repository/download/AppAssure_Linux_$2/$id:
 error_code=`wget --auth-no-challenge --no-check-certificate --http-user=$username --http-passwd=123asdQ -q --spider $build_link; echo $?`
 
 echo $build_link
+i=0
 
-    while [ $error_code != 0 ]
+    while [ $error_code != 0 ] || [ $i <= 10 ]
     do
+    	let "i=$i+1" 
 	build=$(($build -1))
 	build_link="https://tc.appassure.com/repository/download/AppAssure_Linux_$2/$id:id/rapidrecovery-livedvd-$branch.$build.iso"	
 	error_code=`wget --auth-no-challenge --no-check-certificate --http-user=$username --http-passwd=123asdQ -q --spider $build_link; echo $?`
@@ -39,9 +41,9 @@ echo $chk_file_ex
    fi
 }
 
-get_branch_a_build "6.2.0" "Release700_AgentBuilds_Debian8x64" "release" "1"
+get_branch_a_build "6.2.0" "Release700_AgentBuilds_Debian8x64" "release" "3"
 
-get_branch_a_build "7.1.0" "RebrandedDevelop_AgentBuilds_Debian8x64" "develop" "2"
+get_branch_a_build "7.1.0" "RebrandedDevelop_AgentBuilds_Debian8x64" "develop" "1"
 
 exit
 
