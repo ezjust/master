@@ -5,13 +5,13 @@ $downloadFolder = split-path -parent $MyInvocation.MyCommand.Definition
 $username = "dev-softheme"
 $password = Get-Content "$downloadFolder\devuser_tc.txt"
 $folder = "C:\ProgramData\AppRecovery\Logs"
-$down_log = "$downloadFolder\downloading.log"
+$inst_log = "$downloadFolder\last_installation.log"
+$dies = Add-Content -Path $inst_log -Value "---------------------------------" -Force
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 # Set Security protocol
 
 #SMTP settings
 $User = "ezjusy"
 $Pass = "ezJUST3009"
-
 $From = "ezjusy@gmail.com"
 $To = "3spirit3@ukr.net"
 $emailSmtpServer = "smtp.gmail.com"
@@ -52,7 +52,8 @@ $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault
 $core_ver = "develop 10.10.61.30"
 }
 else {
-Write-Error "$date : branch has been set in wrong way, there is no such $branch available on the teamcity" >> $down_log
+$dies
+Add-Content -Path $inst_log -Value "***[INFO]*** $date : branch has been set in wrong way, there is no such $branch available on the teamcity" -Force
 }
 
 #Dates in different formats
@@ -78,7 +79,8 @@ if ($HTTP_Status = "200") {
     $wc.UseDefaultCredentials = $true
     $wc.Credentials = New-Object System.Net.NetworkCredential($username, $password)
     [xml]$xml = $wc.DownloadString("$artilink")
-   
+    $wc.Dispose()
+       
     foreach ($link in $xml.files.file.content.href) {
         if ($link -like '*Core-X*') {
             $myMatch = ".*installers\/(.*-([\d.]+).exe)"
@@ -87,8 +89,9 @@ if ($HTTP_Status = "200") {
             $dlink = "https://tc.appassure.com" + $link
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
-                Write-Output "$date_time : $installer already exist in $downloadFolder. Skipping..." >> $down_log
-                Write-Host -foregroundcolor cyan "Please check current directory downloading.log for details"
+                $dies
+                Add-Content -Path $inst_log -Value "***[INFO]*** $date_time : $installer already exist in $downloadFolder. Skipping..." -Force
+                Write-Host -foregroundcolor cyan "Please check current directory last_installation.log for details"
             }
         
             else {
@@ -110,16 +113,15 @@ if ($HTTP_Status = "200") {
 }
 
 
-else {Write-Error "$date : There are no artifacts in the last build, wait for new one or install manually" >> $down_log;}
+else { $dies; Add-Content -Path $inst_log -Value "***[ERROR]*** $date : There are no artifacts in the last build, wait for new one or install manually" -Force}
 
 
-#Collecting powershell output installation log from bat file execution
-$power_logs = "$downloadFolder\Process.log"
-Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
+#Collecting powershell output installation log of bat file execution
+Get-Content "$downloadFolder\ps_exec.log" | Out-File -Append $inst_log
 
-#Installation of latest downloaded build for last 1000 minutes
+#Installation of latest downloaded build for last 200 minutes
 
-    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-100)} | Select-Object -first 1 | Select -exp Name
+    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-200)} | Select-Object -first 1 | Select -exp Name
     $com = "$downloadFolder\$last_build"
     $com_args = @(
     "/silent",
@@ -127,9 +129,7 @@ Get-Content "$downloadFolder\powershell_execution.log" | Out-File $power_logs
     "reboot=asneeded"
     "privacypolicy=accept"
     )
-    $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait -PassThru
-    $lastcom = $?
-    Write-Host $lastcom
+    $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait
 
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
@@ -155,19 +155,31 @@ Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.Las
 
 #Sending e-mails and save logs of installation proccess
 
-if ( $lastcom -eq "True" ) {
-Write-Output "$date_time : new Core build $installer is successfully installed" >> $down_log
+while (($Core_Status -ne 200 -and $lastcom1 -ne $True) -and ( $count -lt 20 ))
+{    
+# We then get a response from the Core
+$count=$count+1
+$Core_Request = [System.Net.WebRequest]::Create("https://localhost:8006/apprecovery/admin/")
+$Core_Request.Credentials = new-object System.Net.NetworkCredential("administrator", "$password")
+$Core_Response = $Core_Request.GetResponse()
+$lastcom1=$?
+$Core_Status = [int]$Core_Response.StatusCode
+}
 
-$cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
-$mongos_ser = Get-Service -Name "*Mongo*" | %{$_.Status}
-$statuses = "Mongo service status = <<$mongos_ser>> `r`nCore service status = <<$cores_ser>>"
+
+if ( $lastcom -eq "True" -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
+$dies
+Add-Content -Path $inst_log -Value "***[INFO]*** $date_time : new Core build $installer is successfully installed" -Force
+#$cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
+
+Move-Item -Force $inst_log -Destination "$inst_log.old"
 
 #Message to mail
-
+<#
 $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
-#$emailMessage.cc.add($emailcc)
+$emailMessage.cc.add($emailcc)
 $emailMessage.Subject = "CORE UPGRADED" 
-#$emailMessage.IsBodyHtml = $true #true or false depends
+$emailMessage.IsBodyHtml = $true #true or false depends#
 $emailMessage.Body = "Server info = $core_ver`r`nnew Core build $installer is successfully installed`r`n$statuses"
 $att1 = new-object Net.Mail.Attachment($power_logs)
 $emailMessage.Attachments.add($att1)
@@ -176,25 +188,37 @@ $SMTPClient.EnableSsl = $False
 $SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $User , $Pass );
 $SMTPClient.EnableSsl = $true;
 $SMTPClient.Send( $emailMessage )
+#>
+
+#Message to slack
+
+$emoji=":ghost:"
+$text="Server info = $core_ver`r`nnew Core build $installer is successfully installed`r`n'https://localhost:8006/apprecovery/admin/' successfully validated!"
+$postSlackMessage = @{token="xoxp-321701335184-323883717376-334270943907-2fb286aa6c0ee87e85e9ef3b0d6b0f7a";channel="test-power";text="$text";username="linux_qa-bot"; icon_emoji="$emoji"}
+
+# Very important setting for Invoke-Webrequest, makes invoke-webrequest in the same powershell space after eralier created webclients
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = $null
+
+Invoke-RestMethod -Uri https://slack.com/api/chat.postMessage -Body $postSlackMessage
 
 Exit 0
 }
 
-else { Write-Output "$date_time : INSTALLATION FAILED check AppRecoveryInstallation.log and Process.log for details" >> $down_log
+else { 
 
-#Collecting powershell output installation log
-$last_log = "$downloadFolder\last_installation.log"
-Get-Content $log | Select-String -pattern "$date", "$date_" | Set-Content $last_log
+$dies
+Add-Content -Path $inst_log -Value "***[ERROR]*** $date_time : INSTALLATION FAILED check last_installation.log for details" -Force
+$dies
+Get-Content $log | Select-String -pattern "$date", "$date_" | Out-File -Append $inst_log
 
+Move-Item -Force $inst_log -Destination "$inst_log.old"
 
 #Message to mail if core was not upgraded
 $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
 #$emailMessage.cc.add($emailcc)
 $emailMessage.Subject = "CORE FAILED TO UPGRADE" 
 $emailMessage.Body = "Server info = $core_ver`r`nOOps...Something went wrong.Look at attached log file, maybe it could help to investigate the issue"
-$emailMessage.Attachments.add($power_logs)
-$emailMessage.Attachments.add($last_log)
-$emailMessage.Attachments.add($down_log)
+$emailMessage.Attachments.add("$inst_log.old")
 $SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
 $SMTPClient.EnableSsl = $False
 $SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $User , $Pass );
