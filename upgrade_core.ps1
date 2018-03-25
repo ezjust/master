@@ -6,6 +6,7 @@ $username = "dev-softheme"
 $password = Get-Content "$downloadFolder\devuser_tc.txt"
 $folder = "C:\ProgramData\AppRecovery\Logs"
 $inst_log = "$downloadFolder\last_installation.log"
+Start-Transcript -Path $inst_log -NoClobber
 $dies = Add-Content -Path $inst_log -Value "---------------------------------" -Force
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 # Set Security protocol
 
@@ -117,11 +118,11 @@ else { $dies; Add-Content -Path $inst_log -Value "***[ERROR]*** $date : There ar
 
 
 #Collecting powershell output installation log of bat file execution
-Get-Content "$downloadFolder\ps_exec.log" | Out-File -Append $inst_log
+#Get-Content "$downloadFolder\ps_exec.log" | Out-File -Append $inst_log
 
-#Installation of latest downloaded build for last 200 minutes
+#Installation of latest downloaded build for last 10000 minutes
 
-    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddMinutes(-200)} | Select-Object -first 1 | Select -exp Name
+    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddDays(-2)} | Select-Object -first 1 | Select -exp Name
     $com = "$downloadFolder\$last_build"
     $com_args = @(
     "/silent",
@@ -129,8 +130,8 @@ Get-Content "$downloadFolder\ps_exec.log" | Out-File -Append $inst_log
     "reboot=asneeded"
     "privacypolicy=accept"
     )
-    $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait
-
+    $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait 
+       
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
 $days="2"
@@ -166,13 +167,15 @@ $lastcom1=$?
 $Core_Status = [int]$Core_Response.StatusCode
 }
 
+Stop-Transcript | Out-Null
 
 if ( $lastcom -eq "True" -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
 $dies
 Add-Content -Path $inst_log -Value "***[INFO]*** $date_time : new Core build $installer is successfully installed" -Force
 #$cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
 
-Move-Item -Force $inst_log -Destination "$inst_log.old"
+Remove-Item -Path "$inst_log.old"
+Move-Item $inst_log -Destination "$inst_log.old" -Force
 
 #Message to mail
 <#
