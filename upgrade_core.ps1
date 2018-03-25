@@ -6,8 +6,8 @@ $username = "dev-softheme"
 $password = Get-Content "$downloadFolder\devuser_tc.txt"
 $folder = "C:\ProgramData\AppRecovery\Logs"
 $inst_log = "$downloadFolder\last_installation.log"
-Start-Transcript -Path $inst_log
-$dies = Add-Content -Path $inst_log -Value "`n---------------------------------" -Force
+Start-Transcript -Path $inst_log -NoClobber
+$dies = Add-Content -Path $inst_log -Value "---------------------------------" -Force
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 # Set Security protocol
 
 #SMTP settings
@@ -54,7 +54,7 @@ $core_ver = "develop 10.10.61.30"
 }
 else {
 $dies
-Add-Content -Path $inst_log -Value "`n***[INFO]*** $date : branch has been set in wrong way, there is no such $branch available on the teamcity" -Force
+Add-Content -Path $inst_log -Value "***[INFO]*** $date : branch has been set in wrong way, there is no such $branch available on the teamcity" -Force
 }
 
 #Dates in different formats
@@ -91,7 +91,7 @@ if ($HTTP_Status = "200") {
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
                 $dies
-                Add-Content -Path $inst_log -Value "`n***[INFO]*** $date_time : $installer already exist in $downloadFolder. Skipping..." -Force
+                Add-Content -Path $inst_log -Value "***[INFO]*** $date_time : $installer already exist in $downloadFolder. Skipping..." -Force
                 Write-Host -foregroundcolor cyan "Please check current directory last_installation.log for details"
             }
         
@@ -114,7 +114,7 @@ if ($HTTP_Status = "200") {
 }
 
 
-else { $dies; Add-Content -Path $inst_log -Value "`n***[ERROR]*** $date : There are no artifacts in the last build, wait for new one or install manually" -Force}
+else { $dies; Add-Content -Path $inst_log -Value "***[ERROR]*** $date : There are no artifacts in the last build, wait for new one or install manually" -Force}
 
 
 #Collecting powershell output installation log of bat file execution
@@ -138,7 +138,7 @@ $days="2"
 $lastwrite = (get-date).AddDays(-$days)
 Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
 
-#Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such last_installation.log and other "new added" files EXIST in the installation folder
+#Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such are Process.log and last_installation.log and other "new added" files EXIST in the installation folder
 
 
     $Ar = New-Object System.Security.AccessControl.FileSystemAccessRule ("Users","FullControl","Allow")
@@ -158,7 +158,7 @@ Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.Las
 
 while (($Core_Status -ne 200 -and $lastcom1 -ne $True) -and ( $count -lt 20 ))
 {    
-# Get a response from the Core
+# We then get a response from the Core
 $count=$count+1
 $Core_Request = [System.Net.WebRequest]::Create("https://localhost:8006/apprecovery/admin/")
 $Core_Request.Credentials = new-object System.Net.NetworkCredential("administrator", "$password")
@@ -171,7 +171,7 @@ Stop-Transcript | Out-Null
 
 if ( $lastcom -eq "True" -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
 $dies
-Add-Content -Path $inst_log -Value "`n***[INFO]*** $date_time : new Core build $installer is successfully installed" -Force
+Add-Content -Path $inst_log -Value "***[INFO]*** $date_time : new Core build $installer is successfully installed" -Force
 #$cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
 
 Remove-Item -Path "$inst_log.old"
@@ -210,7 +210,7 @@ Exit 0
 else { 
 
 $dies
-Add-Content -Path $inst_log -Value "`n***[ERROR]*** $date_time : INSTALLATION FAILED check last_installation.log for details" -Force
+Add-Content -Path $inst_log -Value "***[ERROR]*** $date_time : INSTALLATION FAILED check last_installation.log for details" -Force
 $dies
 Get-Content $log | Select-String -pattern "$date", "$date_" | Out-File -Append $inst_log
 
