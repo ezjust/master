@@ -3,11 +3,12 @@
 #Preset of variables. Note: $password and QA.lic (Core license file) file should exists in current directory. Also if LOGS folder is not default please change $folder path
 $downloadFolder = split-path -parent $MyInvocation.MyCommand.Definition
 $username = "dev-softheme"
-$password = Get-Content "$downloadFolder\devuser_tc.txt"
+$tc_string = Get-Content "$downloadFolder\credentials.txt" | Select-string -pattern "tc_password" -encoding ASCII | Select -First 1
+$password = $tc_string -replace ".*="
 $folder = "C:\ProgramData\AppRecovery\Logs"
 $inst_log = "$downloadFolder\last_installation.log"
-Start-Transcript -Path $inst_log -NoClobber
-$dies = Add-Content -Path $inst_log -Value "---------------------------------" -Force
+powershell.exe Start-Transcript -Path $inst_log
+$dies = Add-Content -Path $inst_log -Value "`n---------------------------------" -Force
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 # Set Security protocol
 
 #SMTP settings
@@ -29,11 +30,13 @@ $build_num = (Select-String $log -pattern "Build number: " | Out-String )
         ForEach-Object -Process {
         $result = $build_num.Split("Build number: ")[-1]
         }
+        if ($result) {
         $branch = $result.Remove(5)
-    }
-    else { Write-Host -foregroundcolor yellow "file AppRecoveryInstallation.log doesn't exist at C:\ProgramData\AppRecovery\Logs please enter branch number manually:"
-    $branch=Read-Host
-    }
+        }
+     }
+        else { Write-Host -foregroundcolor yellow "file AppRecoveryInstallation.log doesn't exist at C:\ProgramData\AppRecovery\Logs please enter branch number manually:"
+        $branch=Read-Host
+        }
 }
 
 #Branch version should be filled if Core is not installed
@@ -54,7 +57,7 @@ $core_ver = "develop 10.10.61.30"
 }
 else {
 $dies
-Add-Content -Path $inst_log -Value "***[INFO]*** $date : branch has been set in wrong way, there is no such $branch available on the teamcity" -Force
+Add-Content -Path $inst_log -Value "`n***[INFO]*** $date : branch has been set in wrong way, there is no such $branch available on the teamcity" -Force
 }
 
 #Dates in different formats
@@ -91,7 +94,7 @@ if ($HTTP_Status = "200") {
             $output = Join-Path $downloadfolder -ChildPath $installer
             if ((Test-Path $output -PathType Leaf)) {
                 $dies
-                Add-Content -Path $inst_log -Value "***[INFO]*** $date_time : $installer already exist in $downloadFolder. Skipping..." -Force
+                Add-Content -Path $inst_log -Value "`n***[INFO]*** $date_time : $installer already exist in $downloadFolder. Skipping..." -Force
                 Write-Host -foregroundcolor cyan "Please check current directory last_installation.log for details"
             }
         
@@ -114,7 +117,7 @@ if ($HTTP_Status = "200") {
 }
 
 
-else { $dies; Add-Content -Path $inst_log -Value "***[ERROR]*** $date : There are no artifacts in the last build, wait for new one or install manually" -Force}
+else { $dies; Add-Content -Path $inst_log -Value "`n***[ERROR]*** $date : There are no artifacts in the last build, wait for new one or install manually" -Force}
 
 
 #Collecting powershell output installation log of bat file execution
@@ -138,7 +141,7 @@ $days="2"
 $lastwrite = (get-date).AddDays(-$days)
 Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.LastWriteTime -lt $lastwrite} | Remove-Item
 
-#Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such are Process.log and last_installation.log and other "new added" files EXIST in the installation folder
+#Set Permissions for log file, to allow send it via mail, BE SURE that all needed files such last_installation.log and other "new added" files EXIST in the installation folder
 
 
     $Ar = New-Object System.Security.AccessControl.FileSystemAccessRule ("Users","FullControl","Allow")
@@ -158,7 +161,7 @@ Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.Las
 
 while (($Core_Status -ne 200 -and $lastcom1 -ne $True) -and ( $count -lt 20 ))
 {    
-# We then get a response from the Core
+# Get a response from the Core
 $count=$count+1
 $Core_Request = [System.Net.WebRequest]::Create("https://localhost:8006/apprecovery/admin/")
 $Core_Request.Credentials = new-object System.Net.NetworkCredential("administrator", "$password")
@@ -171,7 +174,7 @@ Stop-Transcript | Out-Null
 
 if ( $lastcom -eq "True" -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
 $dies
-Add-Content -Path $inst_log -Value "***[INFO]*** $date_time : new Core build $installer is successfully installed" -Force
+Add-Content -Path $inst_log -Value "`n***[INFO]*** $date_time : new Core build $installer is successfully installed" -Force
 #$cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
 
 Remove-Item -Path "$inst_log.old"
@@ -195,9 +198,11 @@ $SMTPClient.Send( $emailMessage )
 
 #Message to slack
 
+$sl_string = Get-Content "$downloadFolder\credentials.txt" | Select-string -pattern "sl_token" -encoding ASCII | Select -First 1
+$token = $sl_string -replace ".*="
 $emoji=":ghost:"
 $text="Server info = $core_ver`r`nnew Core build $installer is successfully installed`r`n'https://localhost:8006/apprecovery/admin/' successfully validated!"
-$postSlackMessage = @{token="xoxp-321701335184-323883717376-334270943907-2fb286aa6c0ee87e85e9ef3b0d6b0f7a";channel="test-power";text="$text";username="linux_qa-bot"; icon_emoji="$emoji"}
+$postSlackMessage = @{token="$token";channel="test-power";text="$text";username="linux_qa-bot"; icon_emoji="$emoji"}
 
 # Very important setting for Invoke-Webrequest, makes invoke-webrequest in the same powershell space after eralier created webclients
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = $null
@@ -210,7 +215,7 @@ Exit 0
 else { 
 
 $dies
-Add-Content -Path $inst_log -Value "***[ERROR]*** $date_time : INSTALLATION FAILED check last_installation.log for details" -Force
+Add-Content -Path $inst_log -Value "`n***[ERROR]*** $date_time : INSTALLATION FAILED check last_installation.log for details" -Force
 $dies
 Get-Content $log | Select-String -pattern "$date", "$date_" | Out-File -Append $inst_log
 
