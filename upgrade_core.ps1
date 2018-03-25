@@ -1,6 +1,6 @@
 #ATTENTION!!!MAKE SURE THAT aria2c is downloaded and configured on your system (for 16flows downloading. Manual is here https://www.youtube.com/watch?v=LS-VmSmtaWg)
 #
-#Preset of variables. Note: $password and QA.lic (Core license file) file should exists in current directory. Also if LOGS folder is not default please change $folder path
+#Preset of variables. Note: credentials.txt and QA.lic (Core license file) file should exist in current directory. Also if LOGS folder is not default please change $folder path
 $downloadFolder = split-path -parent $MyInvocation.MyCommand.Definition
 $username = "dev-softheme"
 $tc_string = Get-Content "$downloadFolder\credentials.txt" | Select-string -pattern "tc_password" -encoding ASCII | Select -First 1
@@ -134,7 +134,7 @@ else { $dies; Add-Content -Path $inst_log -Value "`n***[ERROR]*** $date : There 
     "privacypolicy=accept"
     )
     $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait 
-       
+    $lastcom=$?   
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
 $days="2"
@@ -170,7 +170,10 @@ $lastcom1=$?
 $Core_Status = [int]$Core_Response.StatusCode
 }
 
-Stop-Transcript | Out-Null
+powershell.exe Stop-Transcript | Out-Null
+Stop-Process "powershell.exe"
+
+Write-Host $Core_Status $lastcom $lastcom1
 
 if ( $lastcom -eq "True" -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
 $dies
@@ -202,7 +205,7 @@ $sl_string = Get-Content "$downloadFolder\credentials.txt" | Select-string -patt
 $token = $sl_string -replace ".*="
 $emoji=":ghost:"
 $text="Server info = $core_ver`r`nnew Core build $installer is successfully installed`r`n'https://localhost:8006/apprecovery/admin/' successfully validated!"
-$postSlackMessage = @{token="$token";channel="test-power";text="$text";username="linux_qa-bot"; icon_emoji="$emoji"}
+$postSlackMessage = @{token="$token";channel="linux-qa-team";text="$text";username="linux_qa-bot"; icon_emoji="$emoji"}
 
 # Very important setting for Invoke-Webrequest, makes invoke-webrequest in the same powershell space after eralier created webclients
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = $null
@@ -248,6 +251,6 @@ Directory should consist of this list of files:
 7. last_installation.log
 
 BE aware if develop and release builds would change numbers, also numbers should be changed into the script under:
-if ($branch -eq "7.0.0")
+if ($branch -eq "6.2.0")
 if ($branch -eq "7.1.0")
 '@  
