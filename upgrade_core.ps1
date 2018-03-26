@@ -47,13 +47,15 @@ $branch=Read-Host
 
 # Set $artlink depends on $branch
 
+$ip = Get-NetIPAddress | Where { $_.AddressFamily -like "IPv4" -and $_.InterfaceAlias -match "Ethernet" } | Select -ExpandProperty IPAddress
+
 if ($branch -eq "6.2.0") {
 $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Release700_FullBuild/artifacts/children/installers"
-$core_ver = "release 10.10.61.20"
+$br_name="release"
 }
 elseif ($branch -eq "7.1.0") {
 $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers"
-$core_ver = "develop 10.10.61.30"
+$br_name="develop"
 }
 else {
 $dies
@@ -204,7 +206,7 @@ $SMTPClient.Send( $emailMessage )
 $sl_string = Get-Content "$downloadFolder\credentials.txt" | Select-string -pattern "sl_token" -encoding ASCII | Select -First 1
 $token = $sl_string -replace ".*="
 $emoji=":ghost:"
-$text="Server info = $core_ver`r`nnew Core build $installer is successfully installed`r`n'https://localhost:8006/apprecovery/admin/' successfully validated!"
+$text="Server info = $ip, $br_name`r`nnew Core build $installer is successfully installed`r`n'https://localhost:8006/apprecovery/admin/' successfully validated!"
 $postSlackMessage = @{token="$token";channel="linux-qa-team";text="$text";username="linux_qa-bot"; icon_emoji="$emoji"}
 
 # Very important setting for Invoke-Webrequest, makes invoke-webrequest in the same powershell space after eralier created webclients
@@ -228,7 +230,7 @@ Move-Item -Force $inst_log -Destination "$inst_log.old"
 $emailMessage = New-Object System.Net.Mail.MailMessage( $From , $To )
 #$emailMessage.cc.add($emailcc)
 $emailMessage.Subject = "CORE FAILED TO UPGRADE" 
-$emailMessage.Body = "Server info = $core_ver`r`nOOps...Something went wrong.Look at attached log file, maybe it could help to investigate the issue"
+$emailMessage.Body = "Server info = $ip, $br_name`r`nOOps...Something went wrong.Look at attached log file, maybe it could help to investigate the issue"
 $emailMessage.Attachments.add("$inst_log.old")
 $SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
 $SMTPClient.EnableSsl = $False
