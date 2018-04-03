@@ -135,6 +135,7 @@ else { $dies; Add-Content -Path $inst_log -Value "`n***[ERROR]*** $date : There 
     "reboot=asneeded"
     "privacypolicy=accept"
     )
+    Write-Host -foregroundcolor yellow "$last_build exists in the $downloadFolder and it's started to install"
     $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait 
     $lastcom=$?   
 #Delete builds those are older than 3 days in folder
@@ -167,22 +168,18 @@ while (($Core_Status -ne 200 -and $lastcom1 -ne $True) -and ( $count -lt 20 ))
 $count=$count+1
 $Core_Request = [System.Net.WebRequest]::Create("https://localhost:8006/apprecovery/admin/")
 $Core_Request.Credentials = new-object System.Net.NetworkCredential("administrator", "$password")
-$Core_Response = $Core_Request.GetResponse()
-$lastcom1=$?
+$Core_Response = $Core_Request.GetResponseAsync()
+$lastcom1 = $?
 $Core_Status = [int]$Core_Response.StatusCode
 }
 
-powershell.exe Stop-Transcript | Out-Null
-Stop-Process "powershell.exe"
+Write-Host $lastcom $Core_Status $lastcom1
 
-Write-Host $Core_Status $lastcom $lastcom1
-
-if ( $lastcom -eq "True" -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
+if ( $lastcom -eq $True -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
 $dies
 Add-Content -Path $inst_log -Value "`n***[INFO]*** $date_time : new Core build $installer is successfully installed" -Force
 #$cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
-
-Remove-Item -Path "$inst_log.old"
+Remove-Item -Path "$inst_log.old" -Force
 Move-Item $inst_log -Destination "$inst_log.old" -Force
 
 #Message to mail
@@ -207,7 +204,7 @@ $sl_string = Get-Content "$downloadFolder\credentials.txt" | Select-string -patt
 $token = $sl_string -replace ".*="
 $emoji=":ghost:"
 $text="Server info = $ip, $br_name`r`nnew Core build $installer is successfully installed`r`n'https://localhost:8006/apprecovery/admin/' successfully validated!"
-$postSlackMessage = @{token="$token";channel="linux-qa-team";text="$text";username="linux_qa-bot"; icon_emoji="$emoji"}
+$postSlackMessage = @{token="$token";channel="qa-linux-team";text="$text";username="linux_qa-bot"; icon_emoji="$emoji"}
 
 # Very important setting for Invoke-Webrequest, makes invoke-webrequest in the same powershell space after eralier created webclients
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = $null
@@ -223,7 +220,7 @@ $dies
 Add-Content -Path $inst_log -Value "`n***[ERROR]*** $date_time : INSTALLATION FAILED check last_installation.log for details" -Force
 $dies
 Get-Content $log | Select-String -pattern "$date", "$date_" | Out-File -Append $inst_log
-
+Remove-Item -Path "$inst_log.old"
 Move-Item -Force $inst_log -Destination "$inst_log.old"
 
 #Message to mail if core was not upgraded
