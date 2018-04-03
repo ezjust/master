@@ -125,9 +125,9 @@ else { $dies; Add-Content -Path $inst_log -Value "`n***[ERROR]*** $date : There 
 #Collecting powershell output installation log of bat file execution
 #Get-Content "$downloadFolder\ps_exec.log" | Out-File -Append $inst_log
 
-#Installation of latest downloaded build for last 10000 minutes
+#Installation of latest downloaded build for last day
 
-    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddDays(-2)} | Select-Object -first 1 | Select -exp Name
+    $last_build=Get-ChildItem $downloadFolder\* -Include *.exe | Where{$_.LastWriteTime -gt (Get-Date).AddDays(-1)} | Select-Object -first 1 | Select -exp Name
     $com = "$downloadFolder\$last_build"
     $com_args = @(
     "/silent",
@@ -179,8 +179,8 @@ if ( $lastcom -eq $True -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
 $dies
 Add-Content -Path $inst_log -Value "`n***[INFO]*** $date_time : new Core build $installer is successfully installed" -Force
 #$cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
-Remove-Item -Path "$inst_log.old" -Force
-Move-Item $inst_log -Destination "$inst_log.old" -Force
+Remove-Item -Path "$inst_log.old" -Force -ErrorAction Continue
+Move-Item $inst_log -Destination "$inst_log.old" -Force -ErrorAction Continue
 
 #Message to mail
 <#
