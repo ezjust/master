@@ -1,23 +1,29 @@
 #ATTENTION!!!MAKE SURE THAT aria2c is downloaded and configured on your system (for 16flows downloading. Manual is here https://www.youtube.com/watch?v=LS-VmSmtaWg)
 #
 #Preset of variables. Note: credentials.txt and QA.lic (Core license file) file should exist in current directory. Also if LOGS folder is not default please change $folder path
-$downloadFolder = split-path -parent $MyInvocation.MyCommand.Definition
+$downloadFolder = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$local_user = "share"
 $username = "dev-softheme"
 $tc_string = Get-Content "$downloadFolder\credentials.txt" | Select-string -pattern "tc_password" -encoding ASCII | Select -First 1
 $password = $tc_string -replace ".*="
+$test_connection = Get-Content "$downloadFolder\credentials.txt" | Select-string -pattern "test_connection" -encoding ASCII | Select -First 1
+$local_pass = $test_connection -replace ".*="
 $folder = "C:\ProgramData\AppRecovery\Logs"
 $inst_log = "$downloadFolder\last_installation.log"
-powershell.exe Start-Transcript -Path $inst_log
 $dies = Add-Content -Path $inst_log -Value "`n---------------------------------" -Force
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 # Set Security protocol
 
 #SMTP settings
-$User = "ezjusy"
-$Pass = "ezJUST3009"
-$From = "ezjusy@gmail.com"
+$mail_user = "linuxqateam@gmail.com"
+$From = "linuxqateam@gmail.com"
 $To = "3spirit3@ukr.net"
 $emailSmtpServer = "smtp.gmail.com"
 $emailSmtpServerPort = "587"
+
+
+#LOg to file all executions of powershell
+
+Start-Transcript -Path $inst_log
 
 #Getting branch version develop or release
 $folder_check = Test-Path $folder
@@ -41,7 +47,7 @@ $build_num = (Select-String $log -pattern "Build number: " | Out-String )
 
 #Branch version should be filled if Core is not installed
 
-else { Write-Host -foregroundcolor yellow "Core is not installed, please enter branch version for installation. For example 6.2.0 or 7.1.0"
+else { Write-Host -foregroundcolor yellow "Core is not installed, please enter branch version for installation. For example 6.2.1 or 7.1.0"
 $branch=Read-Host
 }
 
@@ -49,17 +55,29 @@ $branch=Read-Host
 
 $ip = Get-NetIPAddress | Where { $_.AddressFamily -like "IPv4" -and $_.InterfaceAlias -match "Ethernet" } | Select -ExpandProperty IPAddress
 
-if ($branch -eq "6.2.0") {
-$artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Release700_FullBuild/artifacts/children/installers"
+if ($branch -eq "6.2.1") {
+$artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Release621_FullBuild/artifacts/children/installers"
 $br_name="release"
+$weekdays="Wednesday"
 }
 elseif ($branch -eq "7.1.0") {
 $artilink = "https://tc.appassure.com/httpAuth/app/rest/builds/branch:%3Cdefault%3E,status:SUCCESS,buildType:AppAssure_Windows_Develop20_FullBuild/artifacts/children/installers"
 $br_name="develop"
+$weekdays="Tuesday","Thursday"
 }
 else {
 $dies
 Add-Content -Path $inst_log -Value "`n***[INFO]*** $date : branch has been set in wrong way, there is no such $branch available on the teamcity" -Force
+}
+
+#Create Scheduled task in Windows manager of tasks if it is not exist
+
+$check_task = Get-ScheduledTask -TaskName *Core_Upgrade*
+
+if ($check_task -eq $null) {    
+$Time = New-ScheduledTaskTrigger -Weekly -At 22:00 -DaysOfWeek $weekdays 
+$PS = New-ScheduledTaskAction -Execute "$downloadFolder\upgrade_core.ps1"
+Register-ScheduledTask -TaskName "Core_Upgrade_$br_name" -RunLevel Highest -Trigger $Time -User $local_user -Password "$local_pass" –Action $PS -Description "$br_name Core instalation or upgrade task of $branch branch"
 }
 
 #Dates in different formats
@@ -102,7 +120,7 @@ if ($HTTP_Status = "200") {
         
             else {
                 Write-host "Downloading $installer to $downloadFolder..."
-                aria2c -x 16 -d $downloadFolder --http-user=$username --http-passwd=$password $dlink
+                aria2c --check-certificate="false" -x 16 -d $downloadFolder --http-user=$username --http-passwd=$password $dlink
                 #very slow downloading
                 #$credCache = new-object System.Net.CredentialCache
                 #$creds = new-object System.Net.NetworkCredential($username, $password)
@@ -132,12 +150,13 @@ else { $dies; Add-Content -Path $inst_log -Value "`n***[ERROR]*** $date : There 
     $com_args = @(
     "/silent",
     "licensekey=$downloadFolder\QA.lic",
-    "reboot=asneeded"
+    "reboot=never"
     "privacypolicy=accept"
     )
     Write-Host -foregroundcolor yellow "$last_build exists in the $downloadFolder and it's started to install"
-    $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait 
-    $lastcom=$?   
+    $install = Start-Process -FilePath "$com" -ArgumentList $com_args -Wait
+    $lastcom=$? 
+    $install.ExitCode   
 #Delete builds those are older than 3 days in folder
 $extension="*.exe"
 $days="2"
@@ -160,22 +179,22 @@ Get-ChildItem -Path $downloadFolder -Include $extension -Recurse | Where {$_.Las
     set-acl $file.Fullname $acl
     }
 
-#Sending e-mails and save logs of installation proccess
+#Sending notifications and save logs of installation proccess
 
 while (($Core_Status -ne 200 -and $lastcom1 -ne $True) -and ( $count -lt 20 ))
 {    
 # Get a response from the Core
 $count=$count+1
 $Core_Request = [System.Net.WebRequest]::Create("https://localhost:8006/apprecovery/admin/")
-$Core_Request.Credentials = new-object System.Net.NetworkCredential("administrator", "$password")
-$Core_Response = $Core_Request.GetResponseAsync()
+$Core_Request.Credentials = new-object System.Net.NetworkCredential("$local_user", "$local_pass")
+$Core_Response = $Core_Request.GetResponse()
 $lastcom1 = $?
 $Core_Status = [int]$Core_Response.StatusCode
 }
 
 Write-Host $lastcom $Core_Status $lastcom1
 
-if ( $lastcom -eq $True -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
+if ($lastcom -eq $True -and $Core_Status -eq 200 -and $lastcom1 -eq $True) {
 $dies
 Add-Content -Path $inst_log -Value "`n***[INFO]*** $date_time : new Core build $installer is successfully installed" -Force
 #$cores_ser = Get-Service -Name "*Core*" | %{$_.Status}
@@ -231,13 +250,15 @@ $emailMessage.Body = "Server info = $ip, $br_name`r`nOOps...Something went wrong
 $emailMessage.Attachments.add("$inst_log.old")
 $SMTPClient = New-Object System.Net.Mail.SmtpClient( $emailSmtpServer , $emailSmtpServerPort )
 $SMTPClient.EnableSsl = $False
-$SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $User , $Pass );
+$SMTPClient.Credentials = New-Object System.Net.NetworkCredential( $mail_user , $local_pass );
 $SMTPClient.EnableSsl = $true;
 $SMTPClient.Send( $emailMessage ) 
 
 
 Exit 2
 }
+
+Stop-Transcript
 
 @' 
 Directory should consist of this list of files:
@@ -250,6 +271,6 @@ Directory should consist of this list of files:
 7. last_installation.log
 
 BE aware if develop and release builds would change numbers, also numbers should be changed into the script under:
-if ($branch -eq "6.2.0")
+if ($branch -eq "6.2.1")
 if ($branch -eq "7.1.0")
 '@  
