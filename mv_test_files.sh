@@ -2,7 +2,7 @@
 
 #set -x
 
-echo -e "\e[33mSpecify partition's mount points to copy there test files.\e[0m\nMultiple partitions separates by coma. For example /mnt/test1,/mnt/test2\nOr leave empty to copy test files to all mounted partitions.\nIn this case system partitions /boot, /boot/efi, swap etc will be ignored, except root / partition, file will be located into /tmp :"
+echo -e "\e[33mSpecify partition's mount points to copy there test files.\e[0m\nMultiple partitions separates by coma. For example /mnt/test1,/mnt/test2\nOr leave empty to copy test files to all mounted partitions.\nIn this case system partitions /boot, /boot/efi, swap etc will be ignored, except root / partition, file will be located into /home :"
 read -p "" mount
 echo -e "\e[33mSpecify destination filename, for example test.txt\e[0m\nWARNING: use single filename for every iteration:"
 read -p "" test_file
