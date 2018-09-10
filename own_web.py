@@ -1,28 +1,45 @@
-import BaseHTTPServer
+import SocketServer
+from BaseHTTPServer import BaseHTTPRequestHandler
+import os
 
-class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-    '''Handle HTTP requests by returning a fixed 'page'.'''
+last_com = os.system("git log --name-status HEAD^..HEAD")
 
-    # Page to send back.
-    Page = '''\
-<html>
-<body>
-<p>Hello, web!</p>
-</body>
-</html>
-'''
-
-    # Handle a GET request.
-    def do_GET(self):
+class Handler(BaseHTTPRequestHandler):
+    ''' Main class to present webpages and authentication. '''
+    def do_HEAD(self):
+        print "send header"
         self.send_response(200)
-        self.send_header("Content-Type", "text/html")
-        self.send_header("Content-Length", str(len(self.Page)))
+        self.send_header('Content-type', 'text/html')
         self.end_headers()
-        self.wfile.write(self.Page)
 
-#----------------------------------------------------------------------
+    def do_AUTHHEAD(self):
+        print "send header"
+        self.send_response(401)
+        self.send_header('WWW-Authenticate', 'Basic realm=\"Test\"')
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
+    def do_GET(self):
+        ''' Present frontpage with user authentication. '''
+        if self.headers.getheader('Authorization') == None:
+            self.do_AUTHHEAD()
+            self.wfile.write('no auth header received')
+            pass
+        elif self.headers.getheader('Authorization') == 'Basic dGVzdDp0ZXN0':
+            self.do_HEAD()
+            self.wfile.write('Authenticated!')
+            self.wfile.write(last_com)
+
+            pass
+        else:
+            self.do_AUTHHEAD()
+            self.wfile.write(self.headers.getheader('Authorization'))
+            self.wfile.write('not authenticated')
+            pass
+
+httpd = SocketServer.TCPServer(("", 8080), Handler)
+
+httpd.serve_forever()
 
 if __name__ == '__main__':
-    serverAddress = ('', 8080)
-    server = BaseHTTPServer.HTTPServer(serverAddress, RequestHandler)
-    server.serve_forever()
+    main()
