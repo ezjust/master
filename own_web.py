@@ -60,3 +60,14 @@ httpd.serve_forever()
 
 if __name__ == '__main__':
     main()
+
+while httpd:
+git_chk = os.system('git pull')
+kargs = {}
+kargs['stdout'] = subprocess.PIPE
+proc = subprocess.Popen(shlex.split(git_chk), **kargs)
+out_git_chk = proc.communicate()
+
+if out_git_chk:
+    if out_git_chk != 'Already up to date.':
+        restart_program()
